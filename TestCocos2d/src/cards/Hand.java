@@ -26,4 +26,15 @@ public class Hand {
 	public int numCardsInHand(){
 		return myHand.size();
 	}
+	
+	public int getTotalPointsinHand(){
+		int totalPoints =0;
+		for (Card card:myHand){
+			totalPoints = totalPoints + card.getMyvalue();
+		}
+		return totalPoints;
+	}
+	
+	
+	
 }

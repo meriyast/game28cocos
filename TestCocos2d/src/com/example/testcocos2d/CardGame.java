@@ -118,7 +118,7 @@ public class CardGame extends CCColorLayer {
 		game = new Game();
 
 		
-		p1 = new Player("Jeevan", 0);
+		p1 = new Player("Jeevan", 0, game);
 		player1 = CCLabel.makeLabel("Jeevan", "Arial", 15);
 		player1.setColor(ccColor3B.ccGREEN);
 
@@ -126,7 +126,7 @@ public class CardGame extends CCColorLayer {
 		scene.addChild(player1);
 		game.joinGame(p1);
 
-    	p2 = new Player("Meriya", 0);
+    	p2 = new Player("Meriya", 0, game);
     	player2 = 	CCLabel.makeLabel("Meriya", "Arial", 15);
 		player2.setColor(ccColor3B.ccMAGENTA);
 		player2.setPosition(CGPoint.ccp(25,winSize.height/2));
@@ -134,7 +134,7 @@ public class CardGame extends CCColorLayer {
 		scene.addChild(player2);
 		game.joinGame(p2);
 
-		p3 = new Player("Janith", 0);
+		p3 = new Player("Janith", 0, game);
 	    player3 = CCLabel.makeLabel("Janith", "Arial", 15);
 		player3.setColor(ccColor3B.ccYELLOW);
 		player3.setPosition(CGPoint.ccp(winSize.width/2,winSize.height-25));
@@ -142,7 +142,7 @@ public class CardGame extends CCColorLayer {
 		scene.addChild(player3);
 		game.joinGame(p3);
 
-		p4 = new Player("Cijo", 0);
+		p4 = new Player("Cijo", 0, game);
 		player4 = CCLabel.makeLabel("Cijo", "Arial", 15);
 		player4.setColor(ccColor3B.ccWHITE);
 		player4.setPosition(CGPoint.ccp(winSize.width-25,winSize.height/2));

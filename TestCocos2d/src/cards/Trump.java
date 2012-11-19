@@ -49,7 +49,7 @@ public class Trump {
 	
 	public Trump() {
 		this.currentHightestBid =13;
-		this.bidOwner = new Player("RandomPlayerGeneratedAtTrump", 0);
+		this.bidOwner = new Player("RandomPlayerGeneratedAtTrump", 0,null);
 	}
 	
 	

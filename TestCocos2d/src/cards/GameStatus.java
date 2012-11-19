@@ -3,7 +3,8 @@ package cards;
 public enum GameStatus{
 	WAIT("Waiting Phase",1),
 	BID("Bidding Phase",2),
-	PLAY("Play",3);
+	PLAY("Play",3),
+	OVER("Game Over",4);
 	
 	  private int val;
 	  private String description;

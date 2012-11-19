@@ -8,19 +8,22 @@ import java.util.Map;
 
 public class Player {
 
-	public Player(String name, int points) {
-		super();
-		this.name = name;
-		this.points = points;
-		myHand = new Hand();
-	}
-	
 	private String name;
 	private Hand myHand;
 	private int points;
 	private Team team;
 	private boolean isAI;
-
+	private Game gameReference;
+	
+	public Player(String name, int points, Game game) {
+		this.name = name;
+		this.points = points;
+		myHand = new Hand();
+		gameReference = game;
+		isAI = false;
+		team = null;
+	}
+	
 	public Team getTeam() {
 		return team;
 	}
@@ -53,8 +56,8 @@ public class Player {
 		this.points = points;
 	}
 	
-	public boolean isMyTurn(PlayerTurn playerTurn){
-		if (this == playerTurn.getCurrentPlayer()){
+	public boolean isMyTurn(Player player){
+		if (this.getName() == player.getName()){
 			return true;
 		}
 		else{
@@ -109,7 +112,7 @@ public class Player {
 		
 		for(Card card: this.getMyHand().getMyCards()){
 			float value = card.getMyvalue();
-//			System.out.print("\n"+card.getUniqueCardValue()+"=>"+card.getMyvalue());
+//			System.out.print("\n"+carddx.getUniqueCardValue()+"=>"+card.getMyvalue());
 			value = value /10;
 			
 			if(cardsSuiteCounted.containsKey(card.getSuit())){
@@ -163,12 +166,31 @@ public class Player {
 	
 	
 	
+	public Card aiPlayGame(Game game){
+		if(!this.getName().equals(game.currentPlayer))
+			return new Card();
+		
+		
+		return null;
+	}
+	
+	
+	
+	
 	public void describePlayer(){
 		System.out.println("Describing player: "+ this.getName());
 		System.out.print("Hand: ");
 		for(Card card:getMyHand().getMyCards()){
 			System.out.print(card.getUniqueCardValue()+", ");
 		}
+	}
+
+	public Game getGameReference() {
+		return gameReference;
+	}
+
+	public void setGameReference(Game gameReference) {
+		this.gameReference = gameReference;
 	}
 }
 

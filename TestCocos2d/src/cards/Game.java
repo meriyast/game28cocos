@@ -99,7 +99,7 @@ public class Game {
 	}
 
 	public void bid(Player p, int inputTrumpValue) {
-
+		
 		if (inputTrumpValue == 100) {
 			System.out.println(p.getName() + " folded");
 		} else {
@@ -109,6 +109,7 @@ public class Game {
 			
 		}
 	}
+
 
 	public int numPlayersInGame(){
 		return playersInTheGame.size();

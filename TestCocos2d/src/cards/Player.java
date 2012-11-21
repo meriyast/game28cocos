@@ -101,6 +101,7 @@ public class Player {
 		Map<Integer,Float> cardsSuiteCounted = new HashMap<Integer, Float>();
 		float suiteValue = 0;
 		int suiteSelected = 0;
+		float totalValue = 0;
 		int bidValue=0;
 		Card cardSelected;
 		/*
@@ -112,6 +113,7 @@ public class Player {
 		
 		for(Card card: this.getMyHand().getMyCards()){
 			float value = card.getMyvalue();
+			totalValue =  value + totalValue;
 //			System.out.print("\n"+carddx.getUniqueCardValue()+"=>"+card.getMyvalue());
 			value = value /10;
 			
@@ -161,9 +163,16 @@ public class Player {
 		else 
 			bidValue = 16;
 		
+		
+		if(getMyHand().getMyCards().size() > 4){
+			bidValue = 13;
+			float pointTotal = (float) ((float)suiteValue - Math.floor(suiteValue));
+			if(suiteValue > 5 && pointTotal >.6){
+				bidValue = 21;
+			}
+		}
 		return new TrumpCandidate(cardSelected, bidValue);
 	}
-	
 	
 	
 	public Card aiPlayGame(Game game){

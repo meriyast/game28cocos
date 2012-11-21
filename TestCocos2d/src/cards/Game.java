@@ -17,7 +17,7 @@ public class Game {
 	Team team1;
 	Team team2;
 	GameStatus status;
-	CurrentBoard board;
+	private CurrentBoard board;
 	
 	
 	public GameStatus getStatus() {
@@ -40,7 +40,7 @@ public class Game {
 		deck= new Deck() ;
 		team1= new Team("Team1", 0);
 		team2= new Team("Team2", 0);
-		board = new CurrentBoard();
+		setBoard(new CurrentBoard());
 	}
 	
 	
@@ -191,6 +191,16 @@ public class Game {
 
 	public void setTeam2(Team team2) {
 		this.team2 = team2;
+	}
+
+
+	public CurrentBoard getBoard() {
+		return board;
+	}
+
+
+	public void setBoard(CurrentBoard board) {
+		this.board = board;
 	}
 
 	

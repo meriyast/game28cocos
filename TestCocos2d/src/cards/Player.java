@@ -151,7 +151,7 @@ public class Player {
 			 */
 			bidValue = 13;
 			float pointTotal = (float) ((float)suiteValue - Math.floor(suiteValue));
-			if(suiteValue > 5 && pointTotal >=.4){
+			if(suiteValue >= 5 && pointTotal >=.4){
 				bidValue = 21;
 			}
 		}
@@ -162,8 +162,8 @@ public class Player {
 	public Card aiPlayGame(){
 		Game game = gameReference;
 		Card returnCard;
-		boolean ourHold =false;
 		boolean wasCut = false;
+		int trumpSuiteId;
 		if(!this.getName().equals(game.getPlayerTurn().getName()))
 			return new Card();
 		
@@ -175,15 +175,12 @@ public class Player {
 		}
 		//BoardSize !=0. I am not the first player. 
 		else{
+			int suiteId = game.getBoard().getCardsPlayed().get(0).getSuit();
 			Team team = game.getBoard().getCurrentHolder().getTeam();
 			wasCut = game.getBoard().getWasCut();
 			//If my team holds the board, I should support. 
-			if(this.getTeam().toString().equals(team.toString())){
-				ourHold = true;
+			if(this.getTeam().equals(team)){
 				
-				
-				int suiteId = game.getBoard().getCardsPlayed().get(0).getSuit();
-					
 					//will first check if we have cards in suite=roundSuite.
 					returnCard = getBiggestFromHand(suiteId,true);
 				if(returnCard == null)
@@ -192,14 +189,170 @@ public class Player {
 			}
 			//If my team doesn't hold the board, I should attack. 
 			else{
-				ourHold = false;
+				
+				//The hand was owned by the other team by cutting. 
+				if(wasCut){
+					//I have Card from suite:suiteId. Must play the MinCard from suite.
+					if(haveRoundSuite()){
+						returnCard = getMinCardFromHand(suiteId, true);
+					}
+					//I don't have Card form suite:suiteId. Must Cut if possible.
+					else{
+						boolean openedTrumpThisRound = !game.getTrump().isOpen();
+						Card tempTrump  = getTrumpCard();
+						//I don't have a Trump card.
+						if(tempTrump == null){
+							trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+							returnCard = getMinCardFromHand(trumpSuiteId, false);						
+						}
+						//I have a Trump Card.
+						else{
+
+							// my Trump Card's value is greater than the highest Trump in the Board.
+							if(tempTrump.getRank()<getHoldingCard(true).getRank()){
+								returnCard = tempTrump;
+							}
+							//Or, if I ordered to open Trump in this round, I've got to play a trump.
+							else if(openedTrumpThisRound){
+								returnCard = getMinTrump();
+							}
+							/*
+							 * My highest trump is lesser than the highest Trump in the board. don't cut.
+							 * Will be called only if I didn't order to open the Trump this round
+							 */
+							else{
+								trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+								returnCard = getMinCardFromHand(trumpSuiteId, false);
+							}
+							
+						}
+					}
+					returnCard = null;
+				}
+				//The hand was owned by the other team by Heirarchy. 
+				else{
+					//I have Card from suite: roundSuite.
+					if(haveRoundSuite()){
+						Card temp = getBiggestFromHand(suiteId, true);
+						//my biggest Card of the roundSuite is lesser than holdingCard.
+						if(temp.getRank()<getHoldingCard(false).getRank()){
+							returnCard = getMinCardFromHand(suiteId, true);
+						}
+						//my biggest Card of the roundSuite is bigger than holdingCard.
+						else{
+							returnCard = temp;
+						}
+					}
+					//I don't have Card from suite:roundSuite. I must cut. 
+					else{
+						trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+						returnCard = getTrumpCard();
+						
+						/*
+						 * Must consider the fact that I don't have any trump cards to cut with.
+						 * will be returning null at returnCard.
+						 * Since I can't cut, return the lowest card I have in hand.
+						 */
+						if(returnCard == null)
+						returnCard = getMinCardFromHand(trumpSuiteId, false);
+					}
+				}
 			}
 		}
 		
-		return null;
+		return returnCard;
+	}
+	
+	private Card getMinTrump() {
+		Game game = this.getGameReference();
+		int trumpSuiteId;
+		Card returnCard = null;
+		//If Trump is open already.
+		if(game.getTrump().isOpen()){
+			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			returnCard = getMinCardFromHand(trumpSuiteId, true);
+		}
+		//Open Trump, cut with the biggest Trump Value from hand.
+		else{
+			game.revealTrump();
+			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			returnCard = getMinCardFromHand(trumpSuiteId, true);
+		}
+		
+		return returnCard;
+	}
+
+	private Card getTrumpCard(){
+		Game game = this.getGameReference();
+		int trumpSuiteId;
+		Card returnCard = null;
+		//If Trump is open already.
+		if(game.getTrump().isOpen()){
+			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			returnCard = getBiggestFromHand(trumpSuiteId, true);
+		}
+		//Open Trump, cut with the biggest Trump Value from hand.
+		else{
+			game.revealTrump();
+			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			returnCard = getBiggestFromHand(trumpSuiteId, true);
+		}
+		
+		return returnCard;
 	}
 	
 	
+	/**
+	 * Will return the Card that is holding the board. 
+	 * 
+	 * @return
+	 */
+	private Card getHoldingCard(boolean wasCut) {
+		Game game = this.getGameReference();
+		List<Card> gameBoard = game.getBoard().getCardsPlayed();
+		Card returnCard = null;
+		int rank =8;
+		if(wasCut){
+			int trumpSuite =  game.getTrump().getTrumpCard().getSuit();
+			for(Card card:gameBoard){
+				if(card.getSuit() == trumpSuite && card.getRank()<rank){
+					rank = card.getRank();
+					returnCard = card;
+				}
+			}
+		}
+		else{
+			int runningSuite = gameBoard.get(0).getSuit();
+			for(Card card:gameBoard){
+				if(card.getSuit() == runningSuite && card.getRank()<rank){
+					rank = card.getRank();
+					returnCard = card;
+				}
+			}
+		}
+		return returnCard;
+	}
+
+	/**
+	 * Returns 
+	 * True if contains the RoundSuite.
+	 * False otherwise.
+	 * @return
+	 */
+	private boolean haveRoundSuite() {
+		int suiteId = getGameReference().getBoard().getCardsPlayed().get(0).getSuit();
+		Integer suiteIdInteger = Integer.valueOf(suiteId);
+		Map<Integer,Float> suiteMap = getSuiteMap();
+		if(suiteMap.containsKey(suiteIdInteger)){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	
+
 	/**
 	 * Returns the minimum card from the hand.
 	 * if include:true, minCard from the specific suite.

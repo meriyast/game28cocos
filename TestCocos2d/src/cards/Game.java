@@ -203,5 +203,11 @@ public class Game {
 		this.board = board;
 	}
 
+
+	public Card revealTrump() {
+		board.setWasCut(true);
+		return trump.getTrumpCard();
+	}
+
 	
 }

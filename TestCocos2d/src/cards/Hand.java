@@ -1,6 +1,7 @@
 package cards;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Hand {
 	
@@ -35,6 +36,30 @@ public class Hand {
 		return totalPoints;
 	}
 	
-	
-	
+	@Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        Hand guest = (Hand) obj;
+
+    	if(areSameCards(guest.getMyCards()) )
+    		return true;
+    	else
+    		return false;
+    }
+
+	public boolean areSameCards(List<Card> guestCards){
+		if(myHand.size() != guestCards.size())
+			return false;
+        for(int index=0;index<myHand.size();index++){
+        	if(!myHand.get(index).equals(guestCards.get(index)))
+        		return false;
+        }
+        return true;
+	}
 }

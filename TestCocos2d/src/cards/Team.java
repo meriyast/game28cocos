@@ -40,4 +40,22 @@ public class Team {
 		return total;
 	}	
 	
+	
+	@Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        Team guest = (Team) obj;
+    	if(this.totalPoints == guest.getTotalPoints()  &&
+    		this.getTeamName().equals(guest.getTeamName()) )
+    		return true;
+    	else
+    		return false;
+    }
+
 }

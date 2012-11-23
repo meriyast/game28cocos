@@ -36,7 +36,7 @@ public class CardUtilities extends CardGame {
 		float pos;
 		int angle;
 		float rotateBy;
-		//Player3
+		//Player4
 		pos = winSize.height/2.5f;
 		if(winSize.width<700) {
 			pos = pos+25;
@@ -133,6 +133,10 @@ public class CardUtilities extends CardGame {
 		int angle = 5;
 		float rotateBy = 0;
 		int index=0;
+		if(firstRoundBiddingOver) {
+			pos = winSize.width/2.5f;
+			angle=-10;
+		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
 			if(index!=trumpCardIndex) {
@@ -146,7 +150,7 @@ public class CardUtilities extends CardGame {
 				CCRotateBy rotate = CCRotateBy.action(2, angle+rotateBy);
 				card.runAction(rotate);
 				
-				pos = pos+20;
+				pos = pos+40;
 				rotateBy = 0;
 				scene.addChild(card);
 			}
@@ -154,6 +158,59 @@ public class CardUtilities extends CardGame {
 		}		
 	}
 	
+
+	public static void returnTrumpPlayer4(ArrayList<CCSprite> pCards) {
+		float pos;
+		int angle;
+		float rotateBy;
+		//Player4
+
+
+		pos =winSize.height/2.5f;
+		angle = -40;
+		rotateBy = 0;	
+		if(winSize.width<700) {
+			pos = pos-20;
+		}
+		int noOfCards=4;
+		if(firstRoundBiddingOver) {
+			noOfCards=8;
+		}
+		for(CCSprite card:pCards) {
+			scene.removeChild(card, true);
+		}
+		pos =winSize.height/2.5f;
+		angle = -40;
+		rotateBy = 0;	
+		cardsPlayer4 = CCLayer.node();
+		if(firstRoundBiddingOver) {
+			noOfCards=8;
+			if(currentBidOwner==4) {
+				noOfCards=7;
+			}
+			angle=-60;
+		}
+		for(int i =0;i<noOfCards;i++) {
+			CCSprite card = CCSprite.sprite("img/b1fv.png");
+			if(winSize.width > 700) { //if it's a tab
+				card.setPosition(winSize.width/1.4f,pos);
+			} else {
+				card.setScale(0.6f);
+				card.setPosition(winSize.width/1.16f,pos);
+			}
+			
+			CCRotateBy rotate = CCRotateBy.action(1, angle-rotateBy);
+			card.runAction(rotate);
+			if(winSize.width>700) {
+				pos = pos+20;
+				rotateBy = rotateBy+20;
+			} else {
+				pos = pos+15;
+				rotateBy = rotateBy+5;
+			}
+			scene.addChild(card);
+		}			
+	}
 	public static void returnTrumpPlayer3(ArrayList<CCSprite> pCards) {
 		float pos;
 		int angle;
@@ -166,8 +223,15 @@ public class CardUtilities extends CardGame {
 		}
 		angle = 20;
 		rotateBy = 0;	
+		int noOfCards=4;
+		if(firstRoundBiddingOver) {
+			noOfCards=8;
+		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
+		}
+		for(int i =0;i<noOfCards;i++) {
+			CCSprite card = CCSprite.sprite("img/b1fv.png");
 			if(winSize.width > 700) { //if it's a tab
 				card.setPosition(pos,winSize.height/1.15f);
 			} else {
@@ -182,7 +246,7 @@ public class CardUtilities extends CardGame {
 				rotateBy = rotateBy+20;
 			} else {
 				pos = pos+15;
-				rotateBy = rotateBy+5;
+				rotateBy = rotateBy+15;
 			}
 			scene.addChild(card);
 		}	
@@ -200,8 +264,16 @@ public class CardUtilities extends CardGame {
 		}
 		angle = 20;
 		rotateBy = 0;	
+		int noOfCards=4;
+		if(firstRoundBiddingOver) {
+			noOfCards=8;
+			angle=-60;
+		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
+		}
+		for(int i =0;i<noOfCards;i++) {
+			CCSprite card = CCSprite.sprite("img/b1fv.png");
 			if(winSize.width > 700) { //if it's a tab
 				card.setPosition(winSize.width/11,pos);
 			} else {
@@ -215,19 +287,23 @@ public class CardUtilities extends CardGame {
 				pos = pos+20;
 				rotateBy = rotateBy+20;
 			} else {
-				pos = pos+15;
-				rotateBy = rotateBy+5;
+				pos = pos+10;
+				rotateBy = rotateBy+20;
 			}
 			scene.addChild(card);
 		}		
 	}
 	public static void returnTrumpPlayer1(ArrayList<CCSprite> pCards) {
 		float pos =winSize.width/2;
+		int angle = -10;
+		float rotateBy = 0;
 		if(winSize.width<700) {
 			pos = pos+45;
 		}
-		int angle = -10;
-		float rotateBy = 0;
+		if(firstRoundBiddingOver) {
+			pos = winSize.width/2.5f;
+		}
+
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
 			if(winSize.width > 700) { //if it's a tab
@@ -244,7 +320,7 @@ public class CardUtilities extends CardGame {
 				pos = pos+30;
 				rotateBy = rotateBy+25;
 			} else {
-				pos = pos+15;
+				pos = pos+40;
 				rotateBy = rotateBy+5;
 			}
 			scene.addChild(card);

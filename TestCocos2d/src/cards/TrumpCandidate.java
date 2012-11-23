@@ -31,5 +31,21 @@ public class TrumpCandidate{
 		this.bid = 0;
 	}
 	
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        TrumpCandidate guest = (TrumpCandidate) obj;
+    	if(this.bid == guest.getBid()  &&
+    		this.card.equals(guest.getCard()) )
+    		return true;
+    	else
+    		return false;
+    }
 	
 }

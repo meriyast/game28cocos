@@ -183,7 +183,12 @@ public class Player {
 				
 				
 				int suiteId = game.getBoard().getCardsPlayed().get(0).getSuit();
-				returnCard = getBiggestFromSuite(suiteId);
+					
+					//will first check if we have cards in suite=roundSuite.
+					returnCard = getBiggestFromHand(suiteId,true);
+				if(returnCard == null)
+					//if no cards of the same suite, support with the best card from the hand
+					returnCard = getBiggestFromHand(suiteId, false);
 			}
 			//If my team doesn't hold the board, I should attack. 
 			else{
@@ -207,7 +212,13 @@ public class Player {
 	private Card getMinCardFromHand(int suiteId, boolean include){
 		Card returnCard = null;
 		int rank = -1;
+		
+		int trumpSuite = getTrumpSuite();
+		
 		for(Card card: getMyHand().getMyCards()){
+			if(card.getSuit() == trumpSuite)
+				continue;
+			
 			if( card.getSuit() == suiteId && include){
 				if(card.getRank()> rank ){
 					rank = card.getRank();
@@ -228,26 +239,61 @@ public class Player {
 	
 
 	/**
-	 * Returns the biggest card of suite:suiteId. If no card present
-	 * from suite:suiteId, returns null.
+	 *  Returns the biggest card from the hand.
+	 * if include:true, maxCard from the specific suite.
+	 * if include:false, maxCard from everything outside suite.
 	 * 
 	 * @param suiteId
 	 * @return Card/null
 	 */
-	private Card getBiggestFromSuite(int suiteId) {
+	private Card getBiggestFromHand(int suiteId, boolean include) {
 		Card returnCard = null;
 		
 		int rank = 8; 	//the highest rank in the deck is 7. So :)
+		int trumpSuite = getTrumpSuite();
+		
 		for(Card card: getMyHand().getMyCards()){
-			if( card.getSuit() != suiteId)
+			if(card.getSuit() == trumpSuite)
 				continue;
-			if(card.getRank()< rank ){
-				rank = card.getRank();
-				returnCard = card;
+			
+			if( card.getSuit() == suiteId && include){
+				if(card.getRank()< rank ){
+					rank = card.getRank();
+					returnCard = card;
+				}
+			}
+				
+			if (card.getSuit() != suiteId && !include){
+				if(card.getRank()< rank ){
+					rank = card.getRank();
+					returnCard = card;
+				}				
 			}
 		}
 		return returnCard;
 	}
+	
+
+	/**
+	 * Returns an integer value=8 if caller is not eligible to view the trump. 
+	 * Eligibility:
+	 * 1. Owner of the trump. or
+	 * 2. Trump is already open.
+	 * 
+	 * @return
+	 */
+	private int getTrumpSuite(){
+		int trumpSuite = 8;
+		if(getGameReference().getTrump().getBidOwner().toString().equals(this.toString())){
+			 trumpSuite = getGameReference().getTrump().getTrumpCard().getSuit();
+		}
+		else if(getGameReference().getTrump().isOpen()){
+			trumpSuite = getGameReference().getTrump().getTrumpCard().getSuit();
+		}
+		
+		return trumpSuite;
+	}
+	
 	
 	/**
 	 * Returns the biggest card from the hand. 
@@ -320,18 +366,18 @@ public class Player {
 	}
 
 	public Card getPrivateTrump() {
-		return trump;
+		return getTrump();
 	}
 
 	public void setPrivateTrump(Card trump) {
-		this.trump = trump;
+		this.setTrump(trump);
 	}
 	
 	/**
-	 * Groups the card by suite, put into map. key- suit value(int 0-3). value- x.y(float) 
-	 * x= no of occurrence of suite(count), y= total value in the suite. 
-	 * eg: (key: 3) -> (value:2.5) means for clubs, there are 2 cards, and the sum of values
-	 * of all cards = 5(Should be a Jack and Nine. )
+	 * Groups the card by suite, put into map. key- suit value(int 0-3). value-
+	 * x.y(float) x= no of occurrence of suite(count), y= total value in the
+	 * suite. eg: (key: 3) -> (value:2.5) means for clubs, there are 2 cards,
+	 * and the sum of values of all cards = 5(Should be a Jack and Nine. )
 	 */
 	public Map<Integer,Float> getSuiteMap(){
 		Map<Integer,Float> cardsSuiteCounted = new HashMap<Integer, Float>();
@@ -349,6 +395,37 @@ public class Player {
 			}
 		}
 		return cardsSuiteCounted;
+	}
+	
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+    	
+        Player guest = (Player) obj;
+    	if(this.points == guest.getPoints()  &&
+    		this.name.equals(guest.getName()) &&
+    		this.myHand.equals(guest.getMyHand())&&
+    		this.team.equals(guest.getTeam()) &&
+    		this.isAI == guest.getIsAI() &&
+    		this.gameReference == guest.getGameReference() &&
+    		this.getTrump().equals(guest.getTrump())
+    			)
+    		return true;
+    	else
+    		return false;
+    }
+
+	public Card getTrump() {
+		return trump;
+	}
+
+	public void setTrump(Card trump) {
+		this.trump = trump;
 	}
 }
 

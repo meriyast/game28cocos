@@ -4,6 +4,7 @@ public class Trump {
 	int currentHightestBid ;
 	Player bidOwner;
 	Card trumpCard;
+	private boolean isOpen;
 	
 	
 	public Card getTrumpCard() {
@@ -50,10 +51,36 @@ public class Trump {
 	public Trump() {
 		this.currentHightestBid =13;
 		this.bidOwner = new Player("RandomPlayerGeneratedAtTrump", 0,null);
+		setOpen(false);
 	}
 	
 	
-	
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        Trump guest = (Trump) obj;
+    	if(this.currentHightestBid == guest.getCurrentHightestBid()  &&
+    		this.bidOwner.equals(guest.getBidOwner()) &&
+    		this.trumpCard.equals(guest.getTrumpCard()) )
+    		return true;
+    	else
+    		return false;
+    }
+
+	public boolean isOpen() {
+		return isOpen;
+	}
+
+	public void setOpen(boolean isOpen) {
+		this.isOpen = isOpen;
+	}
+
 	
 	
 }

@@ -17,6 +17,7 @@ public class Card implements ICard{
 	
 	private String cardDesc;
 	
+	//This weird ranking will result in Jack= rank0. :/
 	private static final String[] rankStrings = {
 		"jack","nine","ace","ten","king","queen","eight","seven"	
 	};
@@ -120,9 +121,9 @@ public class Card implements ICard{
 	
 	public int compareTo(Object o) {
 		ICard other = (ICard) o;
-		int rdiff = getRank() - other.getRank();
+		int rdiff =  other.getRank() - getRank();
 		if (rdiff == 0) {
-			return getSuit() - other.getSuit();
+			return  other.getSuit() - getSuit() ;
 		}
 		else {
 			return rdiff;

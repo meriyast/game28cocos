@@ -151,7 +151,7 @@ public class Player {
 			 */
 			bidValue = 13;
 			float pointTotal = (float) ((float)suiteValue - Math.floor(suiteValue));
-			if(suiteValue > 5 && pointTotal >.6){
+			if(suiteValue > 5 && pointTotal >=.4){
 				bidValue = 21;
 			}
 		}
@@ -170,25 +170,17 @@ public class Player {
 		
 		 //BoardSize = 0 means the board is empty, and I've to start the game. 
 		if( game.getBoard().getCardsPlayed().size() ==0){
-
-			//If I'm the player who've placed the trump
-			if(game.getTrump().getBidOwner().equals(getName())){
-				returnCard = getBestCardToStart(getPrivateTrump().getSuit());
-			}
-			/* putting a random int value as suiteId. Since there is no 
-			 * suite that starts with 9, if(card.getSuit()!=suite) will always 
-			 * be true.
-			 */
-			else 
-				returnCard = getBestCardToStart(9);
+			
+				returnCard = getBestCardToStart();
 		}
 		//BoardSize !=0. I am not the first player. 
 		else{
 			Team team = game.getBoard().getCurrentHolder().getTeam();
+			wasCut = game.getBoard().getWasCut();
 			//If my team holds the board, I should support. 
 			if(this.getTeam().toString().equals(team.toString())){
 				ourHold = true;
-				wasCut = game.getBoard().getWasCut();
+				
 				
 				int suiteId = game.getBoard().getCardsPlayed().get(0).getSuit();
 				returnCard = getBiggestFromSuite(suiteId);
@@ -196,7 +188,6 @@ public class Player {
 			//If my team doesn't hold the board, I should attack. 
 			else{
 				ourHold = false;
-				wasCut = game.getBoard().getWasCut();
 			}
 		}
 		
@@ -204,22 +195,83 @@ public class Player {
 	}
 	
 	
-	
-
-	
-	//To do next
-	private Card getBiggestFromSuite(int suiteId) {
-		Card returnCard;
-		
+	/**
+	 * Returns the minimum card from the hand.
+	 * if include:true, minCard from the specific suite.
+	 * if include:false, minCard from everything outside suite.
+	 * 
+	 * @param suiteId
+	 * @param includeSuite
+	 * @return
+	 */
+	private Card getMinCardFromHand(int suiteId, boolean include){
+		Card returnCard = null;
+		int rank = -1;
 		for(Card card: getMyHand().getMyCards()){
-			
+			if( card.getSuit() == suiteId && include){
+				if(card.getRank()> rank ){
+					rank = card.getRank();
+					returnCard = card;
+				}
+			}
+				
+			if (card.getSuit() != suiteId && !include){
+				if(card.getRank()> rank ){
+					rank = card.getRank();
+					returnCard = card;
+				}				
+			}
 		}
-		return null;
+		
+		return returnCard;
 	}
+	
 
-	private Card getBestCardToStart(int suite) {
+	/**
+	 * Returns the biggest card of suite:suiteId. If no card present
+	 * from suite:suiteId, returns null.
+	 * 
+	 * @param suiteId
+	 * @return Card/null
+	 */
+	private Card getBiggestFromSuite(int suiteId) {
+		Card returnCard = null;
+		
+		int rank = 8; 	//the highest rank in the deck is 7. So :)
+		for(Card card: getMyHand().getMyCards()){
+			if( card.getSuit() != suiteId)
+				continue;
+			if(card.getRank()< rank ){
+				rank = card.getRank();
+				returnCard = card;
+			}
+		}
+		return returnCard;
+	}
+	
+	/**
+	 * Returns the biggest card from the hand. 
+	 * Will never return suite:trump, if user=trumpOwner.
+	 * 
+	 * Also, won't return a 9. :)
+	 * @return
+	 */
+	private Card getBestCardToStart() {
 		int maxValue = 0;
 		Card returnCard=null ;
+		int suite;
+		Game game = this.getGameReference();
+		
+		//If I'm the player who've placed the trump
+		if(game.getTrump().getBidOwner().equals(getName()))
+			suite = getPrivateTrump().getSuit();
+
+		/* putting a random int value as suiteId. Since there is no 
+		 * suite that starts with 9, if(card.getSuit()!=suite) will always 
+		 * be true.
+		 */
+		else 
+			suite = 9;
 		
 		/* Trying to find the highest value card in the hand. Assuming the minValue =0, 
 		 * we will look for values bigger than that, once the hand is parsed, 
@@ -237,7 +289,7 @@ public class Player {
 			}
 		}
 		/*
-		 * In case all the cards in the hand are of value =0, the function will return
+		 * In case all the cards in the hand are of value = 0, the function will return
 		 * the first card it finds that is not a trump. 
 		 */
 		if(returnCard ==null){
@@ -283,11 +335,9 @@ public class Player {
 	 */
 	public Map<Integer,Float> getSuiteMap(){
 		Map<Integer,Float> cardsSuiteCounted = new HashMap<Integer, Float>();
-		float totalValue = 0;
 
 		for(Card card: this.getMyHand().getMyCards()){
 			float value = card.getMyvalue();
-			totalValue =  value + totalValue;
 			value = value /10;
 			
 			if(cardsSuiteCounted.containsKey(card.getSuit())){

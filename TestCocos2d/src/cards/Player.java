@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class Player {
 
+	boolean debug = true;
 	private String name;
 	private Hand myHand;
 	private int points;
@@ -23,12 +24,16 @@ public class Player {
 		gameReference = game;
 		isAI = false;
 		team = null;
+		trump = null;
 	}
 	
 	public Team getTeam() {
 		return team;
 	}
 
+	public void removeCard(Card card){
+		myHand.removeCard(card);
+	}
 	public void setTeam(Team team) {
 		this.team = team;
 	}
@@ -68,13 +73,13 @@ public class Player {
 	
 
 	public void printPlayer() {
-		System.out.println("\n\n");
+		if(debug) System.out.println("\n\n");
 		System.out.println(this.toString());
-		System.out.println("******************");
+		if(debug) System.out.println("******************");
 
 		Hand hand = this.getMyHand();
 		List<Card> cards = hand.getMyCards();
-			for(Card card:cards){
+		if(debug) for(Card card:cards){
 				System.out.println(card.toString());
 			}
 	}
@@ -135,7 +140,7 @@ public class Player {
 		else
 			cardSelected = suiteSelectedCards.get(1);
 		
-		System.out.println("\nSuiteValue: "+suiteValue);
+		//System.out.println("\nSuiteValue: "+suiteValue);
 		if(suiteValue <=2 ) 
 			bidValue = 14;
 		else if(suiteValue <=3)
@@ -151,7 +156,7 @@ public class Player {
 			 */
 			bidValue = 13;
 			float pointTotal = (float) ((float)suiteValue - Math.floor(suiteValue));
-			if(suiteValue >= 5 && pointTotal >=.4){
+			if((suiteValue >= 5 && pointTotal >=.4) ||(suiteValue >= 4 && pointTotal >=.5)){
 				bidValue = 21;
 			}
 		}
@@ -167,54 +172,72 @@ public class Player {
 		if(!this.getName().equals(game.getPlayerTurn().getName()))
 			return new Card();
 		
-		
+		if(debug) System.out.println("**************");
+		if(debug) System.out.println("");
 		 //BoardSize = 0 means the board is empty, and I've to start the game. 
 		if( game.getBoard().getCardsPlayed().size() ==0){
-			
 				returnCard = getBestCardToStart();
+				if(debug) System.out.println ("First card:"+ returnCard.getUniqueCardValue());
+				if(returnCard == null)
+					if(debug) System.out.println("ReturnCardNull at start");
 		}
 		//BoardSize !=0. I am not the first player. 
 		else{
-			int suiteId = game.getBoard().getCardsPlayed().get(0).getSuit();
+			int suiteId = game.getBoardSuite();
+//			if(debug) System.out.println("SuiteId:"+suiteId);
 			Team team = game.getBoard().getCurrentHolder().getTeam();
+			if(debug) System.out.println("I'm "+getName() +"@"+ getTeam().getTeamName() +",Hand now held by team: "+team.getTeamName());
 			wasCut = game.getBoard().getWasCut();
+			
 			//If my team holds the board, I should support. 
 			if(this.getTeam().equals(team)){
-				
-					//will first check if we have cards in suite=roundSuite.
+				//will first check if we have cards in suite=roundSuite.
+				if(haveRoundSuite()){
 					returnCard = getBiggestFromHand(suiteId,true);
-				if(returnCard == null)
+					if(returnCard != null) if(debug) System.out.println("MyTeam's hand. I'll support with: "+returnCard.getUniqueCardValue());
+				}
+				else{
 					//if no cards of the same suite, support with the best card from the hand
-					returnCard = getBiggestFromHand(suiteId, false);
+					returnCard = getBiggestFromHand(suiteId,false);
+					if(returnCard != null)  if(debug) System.out.println("MyTeam's hand. I'll support with: "+returnCard.getUniqueCardValue());
+				}
+				
 			}
 			//If my team doesn't hold the board, I should attack. 
 			else{
-				
+				if(debug) System.out.println("I must attack");
 				//The hand was owned by the other team by cutting. 
 				if(wasCut){
 					//I have Card from suite:suiteId. Must play the MinCard from suite.
+					if(debug) System.out.println("CurrentBoard was cut");
 					if(haveRoundSuite()){
 						returnCard = getMinCardFromHand(suiteId, true);
+						if(debug) System.out.println("I have boardSuite. I'll give the lowest card: "+returnCard.getUniqueCardValue());
 					}
 					//I don't have Card form suite:suiteId. Must Cut if possible.
 					else{
+						
 						boolean openedTrumpThisRound = !game.getTrump().isOpen();
-						Card tempTrump  = getTrumpCard();
+						Card trumpInHand  = getTrumpCard();
+
 						//I don't have a Trump card.
-						if(tempTrump == null){
+						if(trumpInHand == null){
 							trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
-							returnCard = getMinCardFromHand(trumpSuiteId, false);						
+							returnCard = getMinCardFromHand();		
+							if(debug) System.out.println("I don't have TrumpCard. I'll give lowest card: "+returnCard.getUniqueCardValue());
+
 						}
 						//I have a Trump Card.
 						else{
-
-							// my Trump Card's value is greater than the highest Trump in the Board.
-							if(tempTrump.getRank()<getHoldingCard(true).getRank()){
-								returnCard = tempTrump;
+							// my Trump Card's value is greater than the highest Trump in the CurrentBoard.
+							if(trumpInHand.getRank()<getHoldingCard().getRank()){
+								returnCard = trumpInHand;
+								if(debug) System.out.println("I don't have boardSuite. I'll cut: "+trumpInHand.getUniqueCardValue());
 							}
 							//Or, if I ordered to open Trump in this round, I've got to play a trump.
-							else if(openedTrumpThisRound){
+							if(trumpInHand.getRank()>getHoldingCard().getRank() && openedTrumpThisRound){
 								returnCard = getMinTrump();
+								if(debug) System.out.println("I asked to open the trump. So I have to cut with this trump "+trumpInHand.getUniqueCardValue());
 							}
 							/*
 							 * My highest trump is lesser than the highest Trump in the board. don't cut.
@@ -223,28 +246,36 @@ public class Player {
 							else{
 								trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
 								returnCard = getMinCardFromHand(trumpSuiteId, false);
+								if(debug) System.out.println("I do have a trump. But smaller. So not cutting "+trumpInHand.getUniqueCardValue());
 							}
 							
 						}
 					}
-					returnCard = null;
+//					returnCard = null;
 				}
 				//The hand was owned by the other team by Heirarchy. 
 				else{
+					if(debug) System.out.println("CurrentBoard owned by heirarchy");
 					//I have Card from suite: roundSuite.
 					if(haveRoundSuite()){
-						Card temp = getBiggestFromHand(suiteId, true);
+						if(debug) System.out.println("I have round suite");
+						Card bestCardInHand = getBiggestFromHand(suiteId, true);
 						//my biggest Card of the roundSuite is lesser than holdingCard.
-						if(temp.getRank()<getHoldingCard(false).getRank()){
+						if(bestCardInHand.getRank()>getHoldingCard().getRank()){
 							returnCard = getMinCardFromHand(suiteId, true);
+							if(debug) 
+								System.out.println("My biggest won't take the board. putting in: "+returnCard.getUniqueCardValue());
 						}
 						//my biggest Card of the roundSuite is bigger than holdingCard.
 						else{
-							returnCard = temp;
+							returnCard = bestCardInHand;
+							if(debug)
+								System.out.println("Taking the board with : "+returnCard.getUniqueCardValue());
 						}
 					}
 					//I don't have Card from suite:roundSuite. I must cut. 
 					else{
+						if(debug) System.out.println("I don't have roundSuite. I must cut.");
 						trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
 						returnCard = getTrumpCard();
 						
@@ -253,17 +284,45 @@ public class Player {
 						 * will be returning null at returnCard.
 						 * Since I can't cut, return the lowest card I have in hand.
 						 */
-						if(returnCard == null)
-						returnCard = getMinCardFromHand(trumpSuiteId, false);
+						if(returnCard == null){
+							returnCard = getMinCardFromHand(trumpSuiteId, false);
+							if(debug)
+								System.out.println("I don't have a trumpCard. Minimizing casuality with: "+returnCard.getUniqueCardValue());
+						}
+						else{
+							if(debug)
+								System.out.println("Cutting with trumpCard: "+returnCard.getUniqueCardValue());
+						}
 					}
 				}
 			}
 		}
+		if(returnCard == null)
+			returnCard = getMinCardFromHand();
 		
+		System.out.println("##Player: "+this.getName()+" played:" +returnCard.getUniqueCardValue());
 		return returnCard;
 	}
 	
+	private Card getMinCardFromHand() {
+		debug = false;
+		if(debug) System.out.println("getMinCardFromHand() "); 
+		Card returnCard = null;
+		int rank = -1;
+		for (Card card : getMyHand().getMyCards()) {
+
+			if (card.getRank() > rank) {
+				rank = card.getRank();
+				returnCard = card;
+			}
+		}
+		return returnCard;
+	}
+
 	private Card getMinTrump() {
+		debug = false;
+		if(debug) System.out.println(" getMinTrump() ");
+
 		Game game = this.getGameReference();
 		int trumpSuiteId;
 		Card returnCard = null;
@@ -283,21 +342,33 @@ public class Player {
 	}
 
 	private Card getTrumpCard(){
+		debug = false;
+		if(debug) System.out.println(" getTrumpCard() ");
+
 		Game game = this.getGameReference();
-		int trumpSuiteId;
+		game.getTrump().describeTrump();
+		int trumpSuiteId=8;
 		Card returnCard = null;
 		//If Trump is open already.
 		if(game.getTrump().isOpen()){
 			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			if(debug) System.out.println("*trumpSuiteId: "+trumpSuiteId);
 			returnCard = getBiggestFromHand(trumpSuiteId, true);
+			if(returnCard == null)
+				if(debug) System.out.println("*returnCard found null at pt1");
 		}
+
 		//Open Trump, cut with the biggest Trump Value from hand.
 		else{
 			game.revealTrump();
 			trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
+			if(debug) System.out.println("*trumpSuiteId: "+trumpSuiteId);
 			returnCard = getBiggestFromHand(trumpSuiteId, true);
+			if(returnCard == null)
+				if(debug) System.out.println("*returnCard found null at pt2");
 		}
-		
+		if(returnCard !=null) 
+			if(debug) System.out.println("The board was cut. I repeat, THE BOARD WAS CUT. Trump: "+ returnCard.getUniqueCardValue());
 		return returnCard;
 	}
 	
@@ -307,30 +378,8 @@ public class Player {
 	 * 
 	 * @return
 	 */
-	private Card getHoldingCard(boolean wasCut) {
-		Game game = this.getGameReference();
-		List<Card> gameBoard = game.getBoard().getCardsPlayed();
-		Card returnCard = null;
-		int rank =8;
-		if(wasCut){
-			int trumpSuite =  game.getTrump().getTrumpCard().getSuit();
-			for(Card card:gameBoard){
-				if(card.getSuit() == trumpSuite && card.getRank()<rank){
-					rank = card.getRank();
-					returnCard = card;
-				}
-			}
-		}
-		else{
-			int runningSuite = gameBoard.get(0).getSuit();
-			for(Card card:gameBoard){
-				if(card.getSuit() == runningSuite && card.getRank()<rank){
-					rank = card.getRank();
-					returnCard = card;
-				}
-			}
-		}
-		return returnCard;
+	private Card getHoldingCard() {
+		return gameReference.getBoard().getHoldingCard();
 	}
 
 	/**
@@ -340,15 +389,12 @@ public class Player {
 	 * @return
 	 */
 	private boolean haveRoundSuite() {
-		int suiteId = getGameReference().getBoard().getCardsPlayed().get(0).getSuit();
-		Integer suiteIdInteger = Integer.valueOf(suiteId);
-		Map<Integer,Float> suiteMap = getSuiteMap();
-		if(suiteMap.containsKey(suiteIdInteger)){
-			return true;
+		int suiteId = getGameReference().getBoardSuite();
+		for(Card card: myHand.getMyCards()){
+			if(card.getSuit()  == suiteId)
+				return true;
 		}
-		else{
 			return false;
-		}
 	}
 	
 	
@@ -363,30 +409,32 @@ public class Player {
 	 * @return
 	 */
 	private Card getMinCardFromHand(int suiteId, boolean include){
+		debug = false;
+		if(debug) System.out.println(" getMinCardFromHand(int suiteId, boolean include) ");
+
 		Card returnCard = null;
 		int rank = -1;
 		
 		int trumpSuite = getTrumpSuite();
-		
 		for(Card card: getMyHand().getMyCards()){
-			if(card.getSuit() == trumpSuite)
+
+			if(card.getSuit() == trumpSuite && suiteId != trumpSuite){
 				continue;
-			
-			if( card.getSuit() == suiteId && include){
+			}
+			if( card.getSuit() == suiteId && include == true){
 				if(card.getRank()> rank ){
 					rank = card.getRank();
 					returnCard = card;
 				}
 			}
 				
-			if (card.getSuit() != suiteId && !include){
+			if (card.getSuit() != suiteId && include == false){
 				if(card.getRank()> rank ){
 					rank = card.getRank();
 					returnCard = card;
 				}				
 			}
 		}
-		
 		return returnCard;
 	}
 	
@@ -400,15 +448,23 @@ public class Player {
 	 * @return Card/null
 	 */
 	private Card getBiggestFromHand(int suiteId, boolean include) {
+		debug = false;
+		if(debug) System.out.println(" getBiggestFromHand(int suiteId, boolean include)");
+
 		Card returnCard = null;
-		
 		int rank = 8; 	//the highest rank in the deck is 7. So :)
 		int trumpSuite = getTrumpSuite();
+		if(debug) System.out.println("suite: "+suiteId+" include: "+include+" trump: "
+		+trumpSuite +"Size of Hand:"+getMyHand().getMyCards().size());
 		
 		for(Card card: getMyHand().getMyCards()){
-			if(card.getSuit() == trumpSuite)
-				continue;
+			if(debug) System.out.println("Now Card: "+card.getUniqueCardValue());
 			
+			
+			 if(card.getSuit() == trumpSuite && suiteId != trumpSuite){
+				 if(debug) System.out.println("Continue");
+				continue;
+			}
 			if( card.getSuit() == suiteId && include){
 				if(card.getRank()< rank ){
 					rank = card.getRank();
@@ -437,8 +493,8 @@ public class Player {
 	 */
 	private int getTrumpSuite(){
 		int trumpSuite = 8;
-		if(getGameReference().getTrump().getBidOwner().toString().equals(this.toString())){
-			 trumpSuite = getGameReference().getTrump().getTrumpCard().getSuit();
+		if(this.trump !=null){
+			 trumpSuite = this.trump.getSuit();
 		}
 		else if(getGameReference().getTrump().isOpen()){
 			trumpSuite = getGameReference().getTrump().getTrumpCard().getSuit();
@@ -451,7 +507,7 @@ public class Player {
 	/**
 	 * Returns the biggest card from the hand. 
 	 * Will never return suite:trump, if user=trumpOwner.
-	 * 
+	 * isValidBid
 	 * Also, won't return a 9. :)
 	 * @return
 	 */
@@ -545,6 +601,16 @@ public class Player {
 			}
 			else{
 				cardsSuiteCounted.put(card.getSuit(), 1f + value);
+			}
+		}
+		//if a trump is set, the trump value should be added to the map as well.
+		if(trump != null){
+			int trumpSuite = trump.getSuit();
+			float value = trump.getMyvalue();
+			value = value/10;
+			if(cardsSuiteCounted.containsKey(trumpSuite)){
+				float mapValue = (float)cardsSuiteCounted.get(trumpSuite)+ ( 1f )+ (value);
+				cardsSuiteCounted.put(trumpSuite, mapValue);
 			}
 		}
 		return cardsSuiteCounted;

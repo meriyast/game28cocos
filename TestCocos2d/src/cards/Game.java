@@ -1,5 +1,8 @@
 package cards;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -8,7 +11,7 @@ import java.util.Random;
 
 
 public class Game {
-
+	boolean debug = false;
 	private Queue<Player> playersInTheGame;
 	Trump trump ;
 	public  Player currentPlayer ;
@@ -17,7 +20,9 @@ public class Game {
 	Team team1;
 	Team team2;
 	GameStatus status;
-	private CurrentBoard board;
+	private CurrentBoard board;	
+	private int boardSuite;
+
 	
 	
 	public GameStatus getStatus() {
@@ -41,6 +46,7 @@ public class Game {
 		team1= new Team("Team1", 0);
 		team2= new Team("Team2", 0);
 		setBoard(new CurrentBoard());
+		board.setGameRef(this);
 	}
 	
 	
@@ -55,6 +61,7 @@ public class Game {
 		playersInTheGame = new LinkedList<Player>();
 		playersInTheGame.add(player);
 		deck= new Deck() ;
+		board.setGameRef(this);
 	}
 	
 	
@@ -63,9 +70,9 @@ public class Game {
 			playersInTheGame.add(player);
 			
 			if (playersInTheGame.size() % 2 == 0) {
-				player.setTeam(team1);
-			} else {
 				player.setTeam(team2);
+			} else {
+				player.setTeam(team1);
 			}
 		} 
 			return numPlayersInGame();
@@ -98,17 +105,6 @@ public class Game {
 		}
 	}
 
-	public void bid(Player p, int inputTrumpValue) {
-		
-		if (inputTrumpValue == 100) {
-			System.out.println(p.getName() + " folded");
-		} else {
-			trump.setBidOwner(p);
-			trump.setCurrentHightestBid(inputTrumpValue);
-			System.out.println("Bid of " + trump.getCurrentHightestBid() + " by " + trump.getBidOwner().getName());
-			
-		}
-	}
 
 
 	public int numPlayersInGame(){
@@ -146,23 +142,41 @@ public class Game {
 	}
 
 
-	public boolean isValidBid(int inputTrumpValue, boolean firstRoundDone){
-		
-		//during first round= mandatory bid
-		if (!firstRoundDone) {
-			if (inputTrumpValue >= 14 && inputTrumpValue <= 28)
-				return true;
-			else
+	public boolean isValidBid(int inputTrumpValue,Player p){
+		if(isFirstRoundDone()){
+			
+			if(inputTrumpValue > getTrump().getCurrentHightestBid() && 
+					getTrump().getBidOwner().getTeam().equals(p.getTeam()) &&
+					p.getMyHand().getMyCards().size()<=4 ){
+				if(debug) System.out.println("Bid owner is from same team.");
 				return false;
-		} else{
-			if (inputTrumpValue > this.getTrump().getCurrentHightestBid() )
+			}
+			
+			if(	
+					inputTrumpValue > getTrump().getCurrentHightestBid() &&
+					inputTrumpValue >  14 &&
+					inputTrumpValue <= 28
+					)
 				return true;
 			else
 				return false;
 		}
+		else{
+			if(inputTrumpValue <14)
+				return false;
+			else
+				return true;
+		}
 	}
 
 
+
+	public int getBoardSuite() {
+		return boardSuite;
+	}
+	public void setBoardSuite(int boardSuite) {
+		this.boardSuite = boardSuite;
+	}
 	
 	public int getGameId() {
 		return gameId;
@@ -206,8 +220,115 @@ public class Game {
 
 	public Card revealTrump() {
 		board.setWasCut(true);
+		this.getTrump().setOpen(true);
 		return trump.getTrumpCard();
 	}
 
+	
+	public void bid(Player p){
+		debug = false;
+		TrumpCandidate trumpCandidate = new TrumpCandidate();
+		if(debug) System.out.println(" ");
+		if(debug) p.describePlayer();
+		
+		//If the player is AI, call aiPlayBid.
+		if (p.getIsAI()) {
+			trumpCandidate = p.aiPlayBid();
+			//if the trumpCandidate is not Valid, return. this would mean pass.
+		} 
+		//The bidder is alive. Get values from the bidder. 
+		else {
+			
+			trumpCandidate =readTrump(p);
+		}
+		
+		//Whether it is ai or not, if the bid is not valid, return.
+		if  (!isValidBid(trumpCandidate.getBid(), p))
+			return;
+		
+		//if a bid was already placed, give that card back to the owner.
+		if(isFirstRoundDone()){
+			trump.getBidOwner().getMyHand().addCard(trump.getTrumpCard());
+		}
+		
+		trump.setBidOwner(p);
+		trump.setCurrentHightestBid(trumpCandidate.getBid());
+		trump.setTrumpCard(trumpCandidate.getCard());
+		if(debug) System.out.println("Bid of " + trump.getCurrentHightestBid() + " by " + trump.getBidOwner().getName());
+		
+		//remove the card from player's hand, and place it in Trump placeholder.
+		p.getMyHand().removeCard(trumpCandidate.getCard());
+		p.setTrump(trumpCandidate.getCard());
+	}
+	
+
+	public boolean isFirstRoundDone(){
+		if(this.getTrump().getCurrentHightestBid() ==13)
+			return false;
+		else 
+			return true;
+			
+	}
+	
+	
+	public TrumpCandidate readTrump(Player p){
+		int inputTrumpValue = 0;
+		TrumpCandidate trumpCandidate = new TrumpCandidate();
+		
+		try {
+			do {			
+				System.out.println("Now bid:" + p.getName());
+				System.out.println("Enter Bid: ");
+				
+				BufferedReader br = new BufferedReader( new InputStreamReader(System.in));
+				String input = "";
+				input = br.readLine();
+				if (input.length() == 0)
+					continue;
+				
+//				String card = "";
+//				input = br.readLine();
+
+				inputTrumpValue = Integer.parseInt(input);
+				trumpCandidate.setBid(inputTrumpValue);
+			} while (isValidBid(inputTrumpValue, p));
+
+		} catch (IOException e) {
+			System.err.println("Error: " + e);
+		}
+		return trumpCandidate;
+	}
+
+
+	public void play(Player p) {
+		Card played;
+		played = p.aiPlayGame();
+		p.getMyHand().removeCard(played);
+		board.updateBoard(p,played);
+	}
+
+
+	public void updateProceedings() {
+		debug = true;
+		Player winner = board.getCurrentHolder();
+		Team winningTeam = winner.getTeam();
+		int totalPoints = winningTeam.getTotalPoints() + board.getTotalPoints();
+		System.out.println("");
+		if(debug) System.out.println("Winner was: "+winner.getName());
+		if(debug) System.out.println("Total Points for Team: "+winningTeam.getTeamName()+" is: "+totalPoints);
+		winningTeam.setTotalPoints(totalPoints);
+		
+		Player player1 = playersInTheGame.peek();
+		while(!winner.equals(player1)){
+			rotateOnce();
+			player1 = playersInTheGame.peek();
+			System.out.println("rotated once");
+		}
+		setPlayerTurn(winner);
+		if(debug) System.out.println(playersInTheGame.peek().getName()+ " starts the next game");
+		board = new CurrentBoard();
+		board.setGameRef(this);
+		board.setWasCut(false);
+	}
 	
 }

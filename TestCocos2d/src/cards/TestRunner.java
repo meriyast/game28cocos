@@ -26,10 +26,6 @@ public class TestRunner {
 			Player aPlayer = new Player(player, 0,game);
 			aPlayer.setIsAI(true);
 			game.joinGame(aPlayer);
-			
-			if(game.getPlayersInTheGame().contains(aPlayer)){
-				System.out.println("added player"+aPlayer.getName());
-			}
 		}
 		
 		do {
@@ -49,55 +45,25 @@ public class TestRunner {
 		LinkedList<Player> players = (LinkedList<Player>) game
 				.getPlayersInTheGame();
 
-		boolean firstRoundDone = false;
 		for (Player p : players) {
-			TrumpCandidate trumpCandidate = new TrumpCandidate();
-			System.out.println(" ");
-
-			p.describePlayer();
-			if (p.getIsAI()) {
-				trumpCandidate = p.aiPlayBid();
-				if  (!game.isValidBid(trumpCandidate.getBid(), firstRoundDone))
-					continue;
-			} else {
-				System.out.println("Now bid:" + p.getName());
-				System.out.println("Enter Bid: ");
-				
-				int inputTrumpValue = 0;
-				try {
-					do {
-						BufferedReader br = new BufferedReader(
-								new InputStreamReader(System.in));
-						String input = "";
-						input = br.readLine();
-						if (input.length() == 0)
-							continue;
-
-						inputTrumpValue = Integer.parseInt(input);
-						trumpCandidate.setBid(inputTrumpValue);
-					} while (!game.isValidBid(inputTrumpValue, firstRoundDone));
-
-				} catch (IOException e) {
-					System.err.println("Error: " + e);
-				}
-
-			}
-			if (firstRoundDone) {
-				if (game.getTrump().getBidOwner().getTeam().equals(p.getTeam())
-						&& trumpCandidate.getBid() < 18) {
-					System.out.println("Bid Placed by team member");
-					continue;
-				}
-			}
-			game.bid(p, trumpCandidate.getBid());
-			if (!firstRoundDone)
-				firstRoundDone = true;
-
+			game.bid(p);
 		}
 
 		game.deal();
-
-
+		
+		for (Player p : players) {
+			game.bid(p);
+		}
+		
+		for(int i = 0; i<8;i++){
+			System.out.println("\n\n$$$$$$$$ ----Round :"+(i+1)+"---- $$$$$$$$");
+			for(Player p:players){
+				game.setPlayerTurn(p);
+				game.play(p);
+			}
+			game.updateProceedings();
+		}
+		System.out.println("Game over. ");
 	}
 
 }

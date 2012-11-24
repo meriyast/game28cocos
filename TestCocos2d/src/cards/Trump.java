@@ -20,13 +20,7 @@ public class Trump {
 	}
 	
 	public void setCurrentHightestBid(int currentHightestBid) {
-		
-		if(this.currentHightestBid<currentHightestBid){
-			this.currentHightestBid = currentHightestBid;
-		}
-		else{
-			return;
-		}
+		this.currentHightestBid = currentHightestBid;
 	}
 	
 	public void returnTrumpToOwner(){
@@ -50,7 +44,6 @@ public class Trump {
 	
 	public Trump() {
 		this.currentHightestBid =13;
-		this.bidOwner = new Player("RandomPlayerGeneratedAtTrump", 0,null);
 		setOpen(false);
 	}
 	
@@ -79,6 +72,10 @@ public class Trump {
 
 	public void setOpen(boolean isOpen) {
 		this.isOpen = isOpen;
+	}
+	
+	public void describeTrump(){
+		System.out.println("TrumpSuite: "+trumpCard.getUniqueCardValue() +" Owner: "+bidOwner.getName());
 	}
 
 	

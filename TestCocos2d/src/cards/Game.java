@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import com.example.testcocos2d.CardGame;
+
 
 
 
@@ -239,7 +241,7 @@ public class Game {
 		//The bidder is alive. Get values from the bidder. 
 		else {
 			
-			trumpCandidate =readTrump(p);
+			trumpCandidate =CardGame.returnTrumpPlayer1();
 		}
 		
 		//Whether it is ai or not, if the bid is not valid, return.

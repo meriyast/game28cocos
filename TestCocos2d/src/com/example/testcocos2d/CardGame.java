@@ -133,7 +133,7 @@ public class CardGame extends CCColorLayer {
 	CGRect cardBox8;
 	CGRect tableBox;
 	
-	static TrumpCandidate p1trumpCard;
+	static TrumpCandidate p1trumpCard=new TrumpCandidate();
 	Trump p2trumpCard;
 	Trump p3trumpCard;
 	Trump p4trumpCard;

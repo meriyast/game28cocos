@@ -305,12 +305,12 @@ public class Game {
 	public Card play(Player p) {
 		//TODO
 		Card played;
-//		if(p.getIsAI()){
+		if(p.getIsAI()){
 			played = p.aiPlayGame();
-//		}
-//		else{
-//			played = Meri'sDummyMethod()
-//		}
+		}
+		else{
+			played = CardGame.getPlayer1PlayedCard();
+		}
 		p.getMyHand().removeCard(played);
 		board.updateBoard(p,played);
 		return played;

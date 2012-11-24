@@ -163,6 +163,7 @@ public class CardGame extends CCColorLayer {
 	private boolean oneRoundOver;
 	private CCNode p3CardToPut;
 	private CCNode p2CardToPut;
+	public static Card player1PlayedCard;
 	
 	public static CCScene scene()
 	{
@@ -1596,6 +1597,8 @@ public class CardGame extends CCColorLayer {
 	  if(whoseTurn==1 && secondRoundBiddingOver && movingCard!=null) {
 		   movingCard.setPosition(location);
 		if(CGRect.containsPoint(tableBox, location)) {
+			game.setPlayerTurn(p1);
+			player1PlayedCard = player1Cards.get(removeIndex);
 			   whoseTurn=2;
 			   if(winSize.width>700) {
 				   movingCard.setScale(1f);
@@ -1613,6 +1616,10 @@ public class CardGame extends CCColorLayer {
 	   
 	  }
 	  return super.ccTouchesMoved(event);
+	}
+	
+	public static Card getPlayer1PlayedCard() {
+		return player1PlayedCard;
 	}
 	
 	@Override

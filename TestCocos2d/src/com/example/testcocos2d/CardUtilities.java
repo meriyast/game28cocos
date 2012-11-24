@@ -46,9 +46,9 @@ public class CardUtilities extends CardGame {
 		int index = 0;
 		for(CCSprite card: pCards) {
 			scene.removeChild(card, true);
-			if(index!=trumpCardIndex) {
+			if((currentBidOwner==4 && index!=trumpCardIndex) || currentBidOwner!=4) {
 				if(winSize.width > 700) { //if it's a tab
-					card.setPosition(winSize.width/1.4f,pos);
+					card.setPosition(winSize.width/1.07f,pos);
 				} else {
 					card.setScale(0.6f);
 					card.setPosition(winSize.width/1.2f,pos);
@@ -77,7 +77,7 @@ public class CardUtilities extends CardGame {
 		int index = 0;
 		for(CCSprite card: pCards) {
 			scene.removeChild(card, true);
-			if(index!=trumpCardIndex) {
+			if((currentBidOwner ==3 && index!=trumpCardIndex) || currentBidOwner!=3) {
 				if(winSize.width > 700) { //if it's a tab
 					card.setPosition(pos,winSize.height/1.15f);
 				} else {
@@ -89,7 +89,7 @@ public class CardUtilities extends CardGame {
 				card.runAction(rotate);
 				pos = pos+20;
 				scene.addChild(card);
-			}
+			} 
 			index++;
 		}	
 	}
@@ -108,7 +108,7 @@ public class CardUtilities extends CardGame {
 		int index = 0;
 		for(CCSprite card: pCards) {
 			scene.removeChild(card, true);
-			if(index!=trumpCardIndex) {
+			if((currentBidOwner==2 && index!=trumpCardIndex) || currentBidOwner!=2) {
 				if(winSize.width > 700) { //if it's a tab
 					card.setPosition(winSize.width/11,pos);
 				} else {
@@ -120,7 +120,7 @@ public class CardUtilities extends CardGame {
 				card.runAction(rotate);
 				pos = pos+20;
 				scene.addChild(card);
-			}
+			} 
 			index++;
 		}
 	}
@@ -135,11 +135,11 @@ public class CardUtilities extends CardGame {
 		int index=0;
 		if(firstRoundBiddingOver) {
 			pos = winSize.width/2.5f;
-			angle=-10;
+			angle=-3;
 		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
-			if(index!=trumpCardIndex) {
+			if((currentBidOwner==1 && index!=trumpCardIndex) || currentBidOwner!=1) {
 				if(winSize.width > 700) { //if it's a tab
 					card.setScale(2f);
 					card.setPosition(pos,winSize.height/5);
@@ -153,11 +153,11 @@ public class CardUtilities extends CardGame {
 				if(winSize.width<700) {
 					pos = pos+40;
 				} else {
-					pos = pos+70;
+					pos = pos+80;
 				}
 				rotateBy = 0;
 				scene.addChild(card);
-			}
+			} 
 			index++;
 		}		
 	}
@@ -177,22 +177,22 @@ public class CardUtilities extends CardGame {
 			pos = pos-20;
 		}
 		int noOfCards=4;
-		if(firstRoundBiddingOver) {
-			noOfCards=8;
-		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
 		}
 		pos =winSize.height/2.5f;
-		angle = -40;
 		rotateBy = 0;	
-		cardsPlayer4 = CCLayer.node();
 		if(firstRoundBiddingOver) {
 			noOfCards=8;
 			if(currentBidOwner==4) {
 				noOfCards=7;
 			}
-			angle=-60;
+			if(winSize.width>700) {
+				angle=30;
+				pos =winSize.height/2f;
+			} else {
+				angle=-50;
+			}
 		}
 		for(int i =0;i<noOfCards;i++) {
 			CCSprite card = CCSprite.sprite("img/b1fv.png");
@@ -207,7 +207,7 @@ public class CardUtilities extends CardGame {
 			card.runAction(rotate);
 			if(winSize.width>700) {
 				pos = pos+20;
-				rotateBy = rotateBy+20;
+				rotateBy = rotateBy+15;
 			} else {
 				pos = pos+15;
 				rotateBy = rotateBy+5;
@@ -230,12 +230,14 @@ public class CardUtilities extends CardGame {
 		int noOfCards=4;
 		if(firstRoundBiddingOver) {
 			noOfCards=8;
+			if(winSize.width>700) {
+				angle=60;
+				pos=winSize.width/2f;
+			}
 		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
-		}
-		for(int i =0;i<noOfCards;i++) {
-			CCSprite card = CCSprite.sprite("img/b1fv.png");
+
 			if(winSize.width > 700) { //if it's a tab
 				card.setPosition(pos,winSize.height/1.15f);
 			} else {
@@ -271,13 +273,11 @@ public class CardUtilities extends CardGame {
 		int noOfCards=4;
 		if(firstRoundBiddingOver) {
 			noOfCards=8;
-			angle=-20;
+			angle=40;
 		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
-		}
-		for(int i =0;i<noOfCards;i++) {
-			CCSprite card = CCSprite.sprite("img/b1fv.png");
+			card.setRotation(90);
 			if(winSize.width > 700) { //if it's a tab
 				card.setPosition(winSize.width/11,pos);
 			} else {
@@ -547,11 +547,11 @@ public class CardUtilities extends CardGame {
 			if(winSize.width<700) {
 				angle=-30;
 			} else {
-				angle=-20;
+				angle=-25;
 			}
 		}
 		p1Cards = new ArrayList<CCSprite>();
-
+		player1Cards = new ArrayList<Card>();
 		int index=0;
 		for(Card c: p1.getMyHand().getMyCards()) {
 			CCSprite cardInHand = CCSprite.sprite(Card.cardMap.get(c.toString()));
@@ -601,6 +601,7 @@ public class CardUtilities extends CardGame {
 				scene.addChild(cardInHand);
 			}
 			p1Cards.add(cardInHand);
+			player1Cards.add(c);
 			index++;
 		}
 		
@@ -692,6 +693,22 @@ public class CardUtilities extends CardGame {
 			p1Cards.get(7).runAction(moveTo);
 			toggle8=false;
 			CardUtilities.removeTrumpAndBidBoxes();
+		}
+	}
+	
+	public static void justRearrange(ArrayList<CCSprite> pCards,int player) {
+		if(player==2) {
+			for(CCSprite csprite:pCards) {
+				csprite.setPosition(csprite.getPosition().x, csprite.getPosition().y-3);
+			}
+		} else if(player==3) {
+			for(CCSprite csprite:pCards) {
+				csprite.setPosition(csprite.getPosition().x-1, csprite.getPosition().y);
+			}			
+		} else if(player==4) {
+			for(CCSprite csprite:pCards) {
+				csprite.setPosition(csprite.getPosition().x, csprite.getPosition().y-3);
+			}			
 		}
 	}
 }

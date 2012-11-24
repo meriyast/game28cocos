@@ -221,8 +221,7 @@ public class Game {
 
 
 	public Card revealTrump() {
-		board.setWasCut(true);
-		this.getTrump().setOpen(true);
+//		this.getTrump().setOpen(true);
 		return trump.getTrumpCard();
 	}
 
@@ -241,7 +240,8 @@ public class Game {
 		//The bidder is alive. Get values from the bidder. 
 		else {
 			
-			trumpCandidate =CardGame.returnTrumpPlayer1();
+			trumpCandidate = CardGame.returnTrumpPlayer1();
+//			trumpCandidate = getTrumpFromUI();
 		}
 		
 		//Whether it is ai or not, if the bid is not valid, return.
@@ -302,11 +302,18 @@ public class Game {
 	}
 
 
-	public void play(Player p) {
+	public Card play(Player p) {
+		//TODO
 		Card played;
-		played = p.aiPlayGame();
+//		if(p.getIsAI()){
+			played = p.aiPlayGame();
+//		}
+//		else{
+//			played = Meri'sDummyMethod()
+//		}
 		p.getMyHand().removeCard(played);
 		board.updateBoard(p,played);
+		return played;
 	}
 
 

@@ -76,15 +76,12 @@ public class CurrentBoard {
 			getGameRef().setBoardSuite(played.getSuit());
 			setCurrentHolder(p);
 			setHoldingCard(played);
-			if (debug)
-				System.out.println("Now holdingCard:"
-						+ played.getUniqueCardValue());
+			
 		} else if (played.getSuit() == getGameRef().getBoardSuite()
 				&& played.getRank() < holdingCard.getRank()) {
 			setCurrentHolder(p);
 			setHoldingCard(played);
-			if (debug)
-				System.out.println("Now holdingCard:" + played.getUniqueCardValue());
+			
 
 		} else if (gameRef.getTrump().getTrumpCard().getSuit() == played
 				.getSuit() && wasCut == false) {
@@ -94,20 +91,19 @@ public class CurrentBoard {
 			setHoldingCard(played);
 			Card playersTrump = gameRef.getTrump().getBidOwner().getTrump();
 			gameRef.getTrump().getBidOwner().getMyHand().addCard(playersTrump);
-			if (debug)
-				System.out.println("Now holdingCard:" + played.getUniqueCardValue());
 
 		} else if (gameRef.getTrump().getTrumpCard().getSuit() == played
 				.getSuit() && wasCut) {
 			if (played.getRank() < getHoldingCard().getRank()) {
 				setCurrentHolder(p);
 				setHoldingCard(played);
-				if (debug)
-					System.out.println("Now holdingCard:" + played.getUniqueCardValue());
 			}
-			if (debug)
-				System.out
-						.println("#######################################################");
+			
+		}
+		if (debug){
+			System.out.println("Now holdingCard:" + getHoldingCard().getUniqueCardValue());
+			System.out
+					.println("#######################################################");
 		}
 	}
 	

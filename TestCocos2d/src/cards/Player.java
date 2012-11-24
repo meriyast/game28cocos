@@ -167,12 +167,12 @@ public class Player {
 	public Card aiPlayGame(){
 		Game game = gameReference;
 		Card returnCard;
+		debug = true;
 		boolean wasCut = false;
 		int trumpSuiteId;
 		if(!this.getName().equals(game.getPlayerTurn().getName()))
 			return new Card();
 		
-		if(debug) System.out.println("**************");
 		if(debug) System.out.println("");
 		 //BoardSize = 0 means the board is empty, and I've to start the game. 
 		if( game.getBoard().getCardsPlayed().size() ==0){
@@ -186,7 +186,7 @@ public class Player {
 			int suiteId = game.getBoardSuite();
 //			if(debug) System.out.println("SuiteId:"+suiteId);
 			Team team = game.getBoard().getCurrentHolder().getTeam();
-			if(debug) System.out.println("I'm "+getName() +"@"+ getTeam().getTeamName() +",Hand now held by team: "+team.getTeamName());
+			System.out.println("I'm "+getName() +"@"+ getTeam().getTeamName() +",Hand now held by team: "+team.getTeamName());
 			wasCut = game.getBoard().getWasCut();
 			
 			//If my team holds the board, I should support. 
@@ -258,19 +258,17 @@ public class Player {
 					if(debug) System.out.println("CurrentBoard owned by heirarchy");
 					//I have Card from suite: roundSuite.
 					if(haveRoundSuite()){
-						if(debug) System.out.println("I have round suite");
+						if(debug) System.out.println("I have round suite. Yay!!");
 						Card bestCardInHand = getBiggestFromHand(suiteId, true);
 						//my biggest Card of the roundSuite is lesser than holdingCard.
 						if(bestCardInHand.getRank()>getHoldingCard().getRank()){
 							returnCard = getMinCardFromHand(suiteId, true);
-							if(debug) 
-								System.out.println("My biggest won't take the board. putting in: "+returnCard.getUniqueCardValue());
+							System.out.println("My biggest won't take the board. putting in: "+returnCard.getUniqueCardValue());
 						}
 						//my biggest Card of the roundSuite is bigger than holdingCard.
 						else{
 							returnCard = bestCardInHand;
-							if(debug)
-								System.out.println("Taking the board with : "+returnCard.getUniqueCardValue());
+							System.out.println("Taking the board with : "+returnCard.getUniqueCardValue());
 						}
 					}
 					//I don't have Card from suite:roundSuite. I must cut. 

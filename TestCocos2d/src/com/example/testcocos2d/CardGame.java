@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.cocos2d.actions.ease.CCEaseAction;
 import org.cocos2d.actions.ease.CCEaseElastic;
+import org.cocos2d.actions.interval.CCDelayTime;
 import org.cocos2d.actions.interval.CCFadeIn;
 import org.cocos2d.actions.interval.CCFadeOut;
 import org.cocos2d.actions.interval.CCIntervalAction;
@@ -116,7 +117,6 @@ public class CardGame extends CCColorLayer {
 	static CCSprite selectedTrumpSprite;
 	boolean cardShownToHimself;
 	
-	boolean gameOver = false;
 	static int whoseTurn = 1;
 	static boolean player1SelectedTrump = false;
 	static boolean player2SelectedTrump = false;
@@ -163,7 +163,19 @@ public class CardGame extends CCColorLayer {
 	private boolean oneRoundOver;
 	private CCNode p3CardToPut;
 	private CCNode p2CardToPut;
+	private boolean player4TurnOver;
+	private boolean player3TurnOver;
+	private boolean player2TurnOver;
+	private ArrayList<CCSprite> cardsOnTableSprites;
+	private boolean revealed;
+	private CCLabel revealTrump;
+	private CGRect trumpCardBox;
 	public static Card player1PlayedCard;
+    public static int whoStartedPlaying;
+    public static int noOfPlayersPlayedInThisRound=0;
+    
+    public boolean gameOver=false;
+	private boolean firstRoundOver;
 	
 	public static CCScene scene()
 	{
@@ -212,6 +224,7 @@ public class CardGame extends CCColorLayer {
 		game.joinGame(p1);
 
     	p2 = new Player("Meriya", 0, game);
+    	p2.setIsAI(true);
     	player2 = 	CCLabel.makeLabel("Meriya", "Arial", 15);
 		player2.setColor(ccColor3B.ccMAGENTA);
 		player2.setPosition(CGPoint.ccp(25,winSize.height/2));
@@ -220,6 +233,7 @@ public class CardGame extends CCColorLayer {
 		game.joinGame(p2);
 
 		p3 = new Player("Janith", 0, game);
+		p3.setIsAI(true);
 	    player3 = CCLabel.makeLabel("Janith", "Arial", 15);
 		player3.setColor(ccColor3B.ccYELLOW);
 		player3.setPosition(CGPoint.ccp(winSize.width/2,winSize.height-25));
@@ -228,6 +242,7 @@ public class CardGame extends CCColorLayer {
 		game.joinGame(p3);
 
 		p4 = new Player("Cijo", 0, game);
+		p4.setIsAI(true);
 		player4 = CCLabel.makeLabel("Cijo", "Arial", 15);
 		player4.setColor(ccColor3B.ccWHITE);
 		player4.setPosition(CGPoint.ccp(winSize.width-25,winSize.height/2));
@@ -271,53 +286,63 @@ public class CardGame extends CCColorLayer {
 			}
 			scene.addChild(bidVale);
 		}	
+		
+
+		cardsOnTable = new ArrayList<Card>();
+		cardsOnTableSprites = new ArrayList<CCSprite>();
 		this.schedule("update",0.5f);
 	}
 
 
 	public void secondRoundCardDeal(float dt) {
-		if(firstRoundBiddingOver && !secondDealOver) {
-			this.unschedule("p2bid");
-			this.unschedule("p3bid");
-			this.unschedule("p4bid");
+		if (firstRoundBiddingOver && !secondDealOver) {
+			whoseTurn = 1;
+			if (firstRoundBiddingOver) {
+				pass = CCLabel.makeLabel("Pass", "Times New Roman", 25);
+				pass.setPosition(winSize.width / 5f, winSize.height / 3f);
+				pass.setColor(ccColor3B.ccc3(127, 255, 212));
+				scene.addChild(pass);
+			}
 			game.deal();
+			game.setStatus(GameStatus.BID);
+
 			CCSprite gameStatus;
-			if(winSize.width>700) {
-				gameStatus = CCLabel.makeLabel("2nd Round Bidding", "Arial", 50);
+			if (winSize.width > 700) {
+				gameStatus = CCLabel
+						.makeLabel("2nd Round Bidding", "Arial", 50);
 			} else {
-				gameStatus = CCLabel.makeLabel("2nd Round Bidding", "Arial", 20);
+				gameStatus = CCLabel
+						.makeLabel("2nd Round Bidding", "Arial", 20);
 			}
 			gameStatus.setColor(ccColor3B.ccWHITE);
-			gameStatus.setPosition(winSize.width/2,winSize.height/1.5f);
+			gameStatus.setPosition(winSize.width / 2, winSize.height / 1.5f);
 			fadeOut = CCFadeOut.action(15);
 			gameStatus.runAction(fadeOut);
 			scene.addChild(gameStatus);
 			CardUtilities.dealPlayer1();
-			//show the back of cards for the rest of the players
-			//Player2
+			// show the back of cards for the rest of the players
+			// Player2
 			CardUtilities.dealPlayer2();
-	
-			//Player3
+
+			// Player3
 			CardUtilities.dealPlayer3();
-			
-			//Player4
+
+			// Player4
 			CardUtilities.dealPlayer4();
-			secondDealOver=true;
-			lowestBidValue=20;
-			whoseTurn =1;
-			currentBidValue=20;
-			if(firstRoundBiddingOver) {
-				pass = CCLabel.makeLabel("Pass",  "Times New Roman", 25);
-				pass.setPosition(winSize.width/5f, winSize.height/3f);
-				pass.setColor(ccColor3B.ccc3(127, 255, 212));
-				scene.addChild(pass);
-			}
-			firstTimeM1=true;
-			firstTimeM2=true;
-			firstTimeM3=true;
-			firstTimeM4=true;
+			lowestBidValue = 20;
+			currentBidValue = 20;
+
+			firstTimeM1 = true;
+			firstTimeM2 = true;
+			firstTimeM3 = true;
+			firstTimeM4 = true;
+			this.unschedule("p2bid");
+			this.unschedule("p3bid");
+			this.unschedule("p4bid");
+			secondDealOver = true;
+			this.unschedule("secondRoundCardDeal");
 		}
-		
+
 	}
 	
 	public void update(float dt) {
@@ -358,6 +383,9 @@ public class CardGame extends CCColorLayer {
 				}
 
 			} else if(game.getStatus().getDescription().equals(GameStatus.PLAY.getDescription())) {
+				if(p1Cards.size()<0) {
+					gameOver=true;
+				}
 				if(firstTimeM1) {
 					if(winSize.width > 700) {
 						message1 = CCLabel.makeLabel("Your turn to play", "Times New Roman", 30);
@@ -370,8 +398,15 @@ public class CardGame extends CCColorLayer {
 					fadeOut = CCFadeOut.action(5);
 					message1.runAction(fadeOut);
 					firstTimeM1=false;
-					cardsOnTable = new ArrayList<Card>();
 					oneRoundOver=false;
+					if(!revealed && whoStartedPlaying!=1) {
+						revealTrump = CCLabel.makeLabel("Reveal Trump", "Times New Roman", 20);
+						revealTrump.setPosition(winSize.width / 5f, winSize.height / 3f);
+						revealTrump.setColor(ccColor3B.ccBLUE);
+						scene.addChild(revealTrump);
+					} else if(revealed) {
+						scene.removeChild(revealTrump, true);
+					}
 				}
 			}
 
@@ -400,7 +435,7 @@ public class CardGame extends CCColorLayer {
 
 				}
 			} else if(game.getStatus().getDescription().equals(GameStatus.PLAY.getDescription())) {
-				if(firstTimeM2) {
+				if(!player2TurnOver && firstTimeM2) {
 					if(winSize.width > 700) {
 						message2 = CCLabel.makeLabel(p2.getName()+"'s turn to play", "Times New Roman", 30);
 					} else {
@@ -415,7 +450,11 @@ public class CardGame extends CCColorLayer {
 					fadeOut = CCFadeOut.action(5);
 					message2.runAction(fadeOut);
 					firstTimeM2=false;
-					this.schedule("aiPlay", 2f);
+					player2TurnOver=true;
+					if(revealed) {
+						scene.removeChild(revealTrump, true);
+					}
+					this.schedule("aiPlayP2", 4f);
 				}
 			}		
 		} else if(whoseTurn ==3) { //Player 3 chance
@@ -436,6 +475,7 @@ public class CardGame extends CCColorLayer {
 						fadeOut = CCFadeOut.action(5);
 						message3.runAction(fadeOut);
 						firstTimeM3=false;
+						
 						this.schedule("p3bid", 2f);
 					}
 				} else if(!player3pass) {
@@ -443,7 +483,7 @@ public class CardGame extends CCColorLayer {
 				}
 
 			} else if(game.getStatus().getDescription().equals(GameStatus.PLAY.getDescription())) {
-				if(firstTimeM3) {
+				if(!player3TurnOver && firstTimeM3) {
 					if(winSize.width > 700) {
 						message3 = CCLabel.makeLabel(p3.getName()+"'s turn to play", "Times New Roman", 30);
 					} else {
@@ -455,7 +495,13 @@ public class CardGame extends CCColorLayer {
 					fadeOut = CCFadeOut.action(5);
 					message3.runAction(fadeOut);
 					firstTimeM3=false;
-				}
+					player3TurnOver=true;
+					this.unschedule("aiPlayP2");
+					if(revealed) {
+						scene.removeChild(revealTrump, true);
+					}
+					this.schedule("aiPlayP3",4f);
+				} 
 			}				
 		} else if(whoseTurn ==4) { //Player 4 chance
 			CCSprite message4;
@@ -484,7 +530,7 @@ public class CardGame extends CCColorLayer {
 				}
 
 			} else if(game.getStatus().getDescription().equals(GameStatus.PLAY.getDescription())) {
-				if(firstTimeM4) {
+				if(!player4TurnOver && firstTimeM4) {
 					if(winSize.width > 700) {
 						message4 = CCLabel.makeLabel(p4.getName()+"'s turn to play", "Times New Roman", 30);
 					} else {
@@ -496,99 +542,307 @@ public class CardGame extends CCColorLayer {
 					fadeOut = CCFadeOut.action(5);
 					message4.runAction(fadeOut);
 					firstTimeM4=false;
-				}
+					player4TurnOver=true;
+					if(revealed) {
+						scene.removeChild(revealTrump, true);
+					}
+					this.schedule("aiPlayP4",4f);
+				} 
 			}		
 		}
 	}
 
-	public void aiPlay(float dt) {
-		if(whoseTurn==2) {
-			if(p2Cards.size()>0) {
-	
-				returnCardAI=p2.getMyHand().getMyCards().get(0);
-				p2CardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
-				p2CardToPut.setRotation(100);
-				if(winSize.width>700){
-					p2CardToPut.setPosition(winSize.width/11,winSize.height/2+40);
-				} else {
-					p2CardToPut.setPosition(winSize.width/7,winSize.height/2+40);
-					p2CardToPut.setScale(0.6f);
-				}
-				scene.addChild(p2CardToPut);
-				CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x+10,table.getPosition().y+20));
-				p2CardToPut.runAction(moveTo);
-				scene.removeChild(p2Cards.get(0), true);
-				p2Cards.remove(0);
-			
-				CardUtilities.justRearrange(p2Cards, 2);
-				cardsOnTable.add(returnCardAI);
-				whoseTurn=3;	
+	public void aiPlayP2(float dt) {
+		game.setPlayerTurn(p2);
+		if(p2Cards.size()>0) {
+
+			returnCardAI=game.play(p2);
+			if(!revealed && game.getTrump().isOpen()) {
+				revealTrumpCard();
+				revealed=true;
 			}
-		} else if(whoseTurn==3) {
-			if(p3Cards.size()>0) {
-				returnCardAI=p3.getMyHand().getMyCards().get(0);
-				p3CardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
-				p3CardToPut.setRotation(200);
-				if(winSize.width>700){
-					p3CardToPut.setPosition(winSize.width/2+40,winSize.height/1.15f);
+			if(currentBidOwner==2) {
+				if(returnCardAI.toString().equals(game.getTrump().getTrumpCard().toString())) {
+					scene.removeChild(trumpCard, true);
+					scene.removeChild(showTrumpCard, true);
 				} else {
-					p3CardToPut.setPosition(winSize.width/2+40,winSize.height/1.25f);
-					p3CardToPut.setScale(0.6f);
+					scene.removeChild(p2Cards.get(0), true);
+					p2Cards.remove(0);						
 				}
-				scene.addChild(p3CardToPut);
-				CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x+20,table.getPosition().y+30));
-				p3CardToPut.runAction(moveTo);
+			} else {
+				scene.removeChild(p2Cards.get(0), true);
+				p2Cards.remove(0);				
+			}
+			CCSprite p2CardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
+			p2CardToPut.setRotation(100);
+			if(winSize.width>700){
+				p2CardToPut.setPosition(winSize.width/11,winSize.height/2+40);
+			} else {
+				p2CardToPut.setPosition(winSize.width/7,winSize.height/2+40);
+				p2CardToPut.setScale(0.6f);
+			}
+			scene.addChild(p2CardToPut);
+			CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x+10,table.getPosition().y+20));
+			p2CardToPut.runAction(moveTo);
+
+		
+			CardUtilities.justRearrange(p2Cards, 2);
+			cardsOnTable.add(returnCardAI);
+			cardsOnTableSprites.add(p2CardToPut);
+			player2TurnOver=true;
+			//whoseTurn=3;
+				if(game.getBoard().getNumPlaysDone()==4) {
+					//call this round is over method
+					this.schedule("oneRoundOver",2f);
+				} else {
+					whoseTurn=3;
+					this.unschedule("aiPlayP2");
+				}
+				setDelay();
+
+		} 
+	}
+	
+	private void revealTrumpCard() {
+		CCSprite revealedM;
+		if(winSize.width>700) {
+			revealedM = CCLabel.makeLabel("Trump Card Revealed", "Arial", 50);
+		} else {
+			revealedM = CCLabel.makeLabel("Trump Card Revealed", "Arial", 15);
+		}
+		revealedM.setColor(ccColor3B.ccORANGE);
+		revealedM.setPosition(winSize.width/2,winSize.height/1.5f);
+		fadeOut = CCFadeOut.action(15);
+		revealedM.runAction(fadeOut);
+		scene.addChild(revealedM);
+		
+		trumpCard.runAction(fadeOut);
+		scene.removeChild(trumpCard, true);		
+		showTrumpCard = CCSprite.sprite(Card.cardMap.get(game.getTrump().getTrumpCard().toString()));
+		showTrumpCard.setPosition(trumpCard.getPosition().x, trumpCard.getPosition().y);
+		CCEaseAction elastic = CCEaseElastic.action(CCIntervalAction.action(1));
+		showTrumpCard.runAction(elastic);
+		if(winSize.width<700) {
+			showTrumpCard.setScale(0.6f);
+		} else {
+			showTrumpCard.setScale(1.5f);
+		}
+		if(currentBidOwner==1) {
+			showTrumpCard.setRotation(0);
+		} else if(currentBidOwner==2) {
+			showTrumpCard.setRotation(90);
+		} else if(currentBidOwner==3) {
+			showTrumpCard.setRotation(180);
+		} else if(currentBidOwner==4) {
+			showTrumpCard.setRotation(270);
+		}
+		scene.addChild(showTrumpCard);
+	}
+
+	public void aiPlayP3(float dt) {
+		game.setPlayerTurn(p3);
+		if(p3Cards.size()>0) {
+			returnCardAI=game.play(p3);
+			if(!revealed && game.getTrump().isOpen()) {
+				revealTrumpCard();
+				revealed=true;
+			}
+			if(currentBidOwner==3) {
+				if(returnCardAI.toString().equals(game.getTrump().getTrumpCard().toString())) {
+					scene.removeChild(trumpCard, true);
+					scene.removeChild(showTrumpCard, true);
+				} else {
+					scene.removeChild(p3Cards.get(0), true);
+					p3Cards.remove(0);					
+				}
+			} else {
 				scene.removeChild(p3Cards.get(0), true);
 				p3Cards.remove(0);
-			
-				CardUtilities.justRearrange(p3Cards, 3);
-				cardsOnTable.add(returnCardAI);
-				whoseTurn=4;
+							
 			}
-		} else if(whoseTurn==4) {
-			if(p4Cards.size()>0) {
-				returnCardAI=p4.getMyHand().getMyCards().get(0);
-				pCardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
-				pCardToPut.setRotation(300);
-				if(winSize.width>700){
-					pCardToPut.setPosition(winSize.width/1.07f,winSize.height/2f);
-				} else {
-					pCardToPut.setPosition(winSize.width/1.16f,winSize.height/2f);
-					pCardToPut.setScale(0.6f);
-				}
-				scene.addChild(pCardToPut);
-				CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x,table.getPosition().y-20));
-				pCardToPut.runAction(moveTo);
-				scene.removeChild(p4Cards.get(0), true);
-				p4Cards.remove(0);
-			CardUtilities.justRearrange(p4Cards, 4);
-			cardsOnTable.add(returnCardAI);
-			this.schedule("oneRoundOver",2f);
+			CCSprite p3CardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
+			p3CardToPut.setRotation(200);
+			if(winSize.width>700){
+				p3CardToPut.setPosition(winSize.width/2+40,winSize.height/1.15f);
+			} else {
+				p3CardToPut.setPosition(winSize.width/2+40,winSize.height/1.25f);
+				p3CardToPut.setScale(0.6f);
 			}
-		}
+			scene.addChild(p3CardToPut);
+			CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x+20,table.getPosition().y+30));
+			p3CardToPut.runAction(moveTo);
 
+			CardUtilities.justRearrange(p3Cards, 3);
+			cardsOnTable.add(returnCardAI);
+			cardsOnTableSprites.add(p3CardToPut);
+			player3TurnOver=true;
+			//whoseTurn=4;
+				if(game.getBoard().getNumPlaysDone()==4) {
+					//call this round is over method
+					this.schedule("oneRoundOver",2f);
+				} else {
+					whoseTurn=4;
+					this.unschedule("aiPlayP3");
+				}
+				setDelay();
+
+		}
+	}
+	
+	public void aiPlayP4(float dt) {
+		game.setPlayerTurn(p4);
+		if(p4Cards.size()>0) {
+			returnCardAI=game.play(p4);
+			if(!revealed && game.getTrump().isOpen()) {
+				revealTrumpCard();
+				revealed=true;
+			}
+			if(currentBidOwner==4) {
+				if(returnCardAI.toString().equals(game.getTrump().getTrumpCard().toString())) {
+					scene.removeChild(trumpCard, true);
+					scene.removeChild(showTrumpCard, true);
+				} else {
+					scene.removeChild(p4Cards.get(0), true);
+					p4Cards.remove(0);						
+				}
+			} else {
+				scene.removeChild(p4Cards.get(0), true);
+				p4Cards.remove(0);				
+			}
+			CCSprite pCardToPut = CCSprite.sprite(Card.cardMap.get(returnCardAI.toString()));
+			pCardToPut.setRotation(300);
+			if(winSize.width>700){
+				pCardToPut.setPosition(winSize.width/1.07f,winSize.height/2f);
+			} else {
+				pCardToPut.setPosition(winSize.width/1.16f,winSize.height/2f);
+				pCardToPut.setScale(0.6f);
+			}
+			scene.addChild(pCardToPut);
+			CCMoveTo moveTo = CCMoveTo.action(1, CGPoint.ccp(table.getPosition().x,table.getPosition().y-20));
+			pCardToPut.runAction(moveTo);
+
+		CardUtilities.justRearrange(p4Cards, 4);
+		cardsOnTable.add(returnCardAI);
+		cardsOnTableSprites.add(pCardToPut);
+		player4TurnOver=true;
+		//this.schedule("oneRoundOver",2f);
+		if(game.getBoard().getNumPlaysDone()==4) {
+			//call this round is over method
+			this.schedule("oneRoundOver",2f);
+		} else {
+			whoseTurn=1;
+			this.unschedule("aiPlayP4");
+		}
+			setDelay();
+		}
+	}		
+
+	public void setDelay() {
+		CCDelayTime delay = CCDelayTime.action(2);
+		this.runAction(delay);
 	}
 
 	public void oneRoundOver(float dt) {
-		if(!oneRoundOver) {
-			CCSprite gameStatus;
-			if(winSize.width>700) {
-				gameStatus = CCLabel.makeLabel("This round over", "Arial", 50);
-			} else {
-				gameStatus = CCLabel.makeLabel("This round over", "Arial", 20);
-			}
-			gameStatus.setColor(ccColor3B.ccWHITE);
-			gameStatus.setPosition(winSize.width/2,winSize.height/1.5f);
-			fadeOut = CCFadeOut.action(15);
-			gameStatus.runAction(fadeOut);
-			scene.addChild(gameStatus);	
-			whoseTurn=1;
-			firstTimeM1=true;
-			firstTimeM2=true;
-			firstTimeM3=true;
-			firstTimeM4=true;	
-			oneRoundOver=true;
+		for(CCSprite cardOnTable: cardsOnTableSprites) {
+			scene.removeChild(cardOnTable, true);
 		}
+		firstRoundOver=true;
+		CCSprite gameStatus;
+		if(winSize.width>700) {
+			gameStatus = CCLabel.makeLabel("This round over", "Arial", 50);
+		} else {
+			gameStatus = CCLabel.makeLabel("This round over", "Arial", 20);
+		}
+		gameStatus.setColor(ccColor3B.ccWHITE);
+		gameStatus.setPosition(winSize.width/2,winSize.height/1.5f);
+		fadeOut = CCFadeOut.action(15);
+		gameStatus.runAction(fadeOut);
+		scene.addChild(gameStatus);
+		CCSprite currentBoardHolder;
+		CCSprite totalPoints;
+		CCSprite team1Points;
+		CCSprite team2Points;
+		if(winSize.width>700) {
+			currentBoardHolder = CCLabel.makeLabel("Current Board Holder: "+game.getBoard().getCurrentHolder().getName(), "Arial", 50);
+		} else {
+			currentBoardHolder = CCLabel.makeLabel("Current Board Holder: "+game.getBoard().getCurrentHolder().getName(), "Arial", 15);
+		}
+		currentBoardHolder.setColor(ccColor3B.ccORANGE);
+		currentBoardHolder.setPosition(winSize.width/4,winSize.height/3f);
+		fadeOut = CCFadeOut.action(15);
+		currentBoardHolder.runAction(fadeOut);
+		scene.addChild(currentBoardHolder);
+		if(winSize.width>700) {
+			totalPoints = CCLabel.makeLabel("Total Points: "+game.getBoard().getTotalPoints(), "Arial", 50);
+		} else {
+			totalPoints = CCLabel.makeLabel("Total Points: "+game.getBoard().getTotalPoints(), "Arial", 15);
+		}
+		totalPoints.setColor(ccColor3B.ccORANGE);
+		totalPoints.setPosition(winSize.width/5,winSize.height/3.5f);
+		fadeOut = CCFadeOut.action(15);
+		totalPoints.runAction(fadeOut);
+		scene.addChild(totalPoints);
+		if(winSize.width>700) {
+			team1Points = CCLabel.makeLabel("Team1 Points: "+game.getTeam1().getTotalPoints(), "Arial", 50);
+		} else {
+			team1Points = CCLabel.makeLabel("Team1 Points: "+game.getTeam1().getTotalPoints(), "Arial", 15);
+		}
+		team1Points.setColor(ccColor3B.ccORANGE);
+		team1Points.setPosition(winSize.width/5,winSize.height/5f);
+		fadeOut = CCFadeOut.action(15);
+		team1Points.runAction(fadeOut);
+		scene.addChild(team1Points);
+		if(winSize.width>700) {
+			team2Points = CCLabel.makeLabel("Team2 Points: "+game.getTeam2().getTotalPoints(), "Arial", 50);
+		} else {
+			team2Points = CCLabel.makeLabel("Team2 Points: "+game.getTeam2().getTotalPoints(), "Arial", 15);
+		}
+		team2Points.setColor(ccColor3B.ccORANGE);
+		team2Points.setPosition(winSize.width/5,winSize.height/6f);
+		fadeOut = CCFadeOut.action(15);
+		team2Points.runAction(fadeOut);
+		scene.addChild(team2Points);
+		game.updateProceedings();
+		if(game.getPlayerTurn().getName().equals(p1.getName())) {
+			whoseTurn=1;
+		} else if(game.getPlayerTurn().getName().equals(p2.getName())) {
+			whoseTurn=2;
+		} else if(game.getPlayerTurn().getName().equals(p3.getName())) {
+			whoseTurn=3;
+		} else if(game.getPlayerTurn().getName().equals(p4.getName())) {
+			whoseTurn=4;
+		}
+		firstTimeM1=true;
+		firstTimeM2=true;
+		firstTimeM3=true;
+		firstTimeM4=true;
+		player2TurnOver=false;
+		player3TurnOver=false;
+		player4TurnOver=false;
+		cardsOnTable = new ArrayList<Card>();
+		cardsOnTableSprites = new ArrayList<CCSprite>();
+		this.unschedule("oneRoundOver");
+		this.unschedule("aiPlayP2");
+		this.unschedule("aiPlayP3");
+		this.unschedule("aiPlayP4");
+		if(p2Cards.size()==0 && p3Cards.size()==0 && p4Cards.size()==0 && p1Cards.size()==0) {
+			gameOver=true;
+		}
+		if(gameOver) {
+			whoseTurn=5;
+			CCSprite winMessage;
+			if(winSize.width>700) {
+				winMessage = CCLabel.makeLabel("Winning Team: "+game.getBoard().getCurrentHolder().getTeam().getTeamName(), "Arial", 50);
+			} else {
+				winMessage = CCLabel.makeLabel("Winning Team: "+game.getBoard().getCurrentHolder().getTeam().getTeamName(), "Arial", 15);
+			}
+			winMessage.setColor(ccColor3B.ccORANGE);
+			winMessage.setPosition(winSize.width/2,winSize.height/2);
+			fadeOut = CCFadeOut.action(15);
+			winMessage.runAction(fadeOut);
+			scene.addChild(winMessage);
+		}
+		
 	}
 	
 	public void showCurrentBid(float dt) {
@@ -618,7 +872,7 @@ public class CardGame extends CCColorLayer {
 		if(whoseTurn==4 && ((!player4SelectedTrump && !player4pass) || firstRoundBiddingOver)) {
 			game.bid(p4);
 			p4trumpCard=game.getTrump();
-			if(p4trumpCard.getBidOwner().getName().equals(p4.getName())) { 
+			if(p4trumpCard.getBidOwner().getName().equals(p4.getName()) && p4trumpCard.getCurrentHightestBid()>trumpBidValue) { 
 				
 				/* player 4 gets to bid if player2 has not bid
 				  and his bid value is greater than currentBidValue
@@ -646,14 +900,14 @@ public class CardGame extends CCColorLayer {
 					bidVale.setPosition(winSize.width/6,winSize.height/4f);
 					scene.addChild(bidVale);
 				}	
-				whoseTurn =1;
 				if(!firstRoundBiddingOver) {
-					this.schedule("secondRoundCardDeal", 0.5f);
 					firstRoundBiddingOver = true;
+					this.schedule("secondRoundCardDeal", 1f);
 				} else {
 					game.setStatus(GameStatus.PLAY);
 					secondRoundBiddingOver = true;
 					this.unschedule("secondRoundCardDeal");
+					setFirstPlayTurn();
 				}
 				this.unschedule("p2bid");
 				this.unschedule("p3bid");
@@ -661,18 +915,36 @@ public class CardGame extends CCColorLayer {
 
 			} else {
 				player4pass=true;
-				whoseTurn = 1;
 				if(!firstRoundBiddingOver) {
-					this.schedule("secondRoundCardDeal", 0.5f);
 					firstRoundBiddingOver = true;
+					this.schedule("secondRoundCardDeal", 1f);
 				} else {
 					game.setStatus(GameStatus.PLAY);
+					setFirstPlayTurn();
 					secondRoundBiddingOver = true;
 					scene.removeChild(pass, true);
 					this.unschedule("secondRoundCardDeal");
 				}
 			}
 		}
+	}
+	
+	public void setFirstPlayTurn() {
+/*		if(game.getTrump().getBidOwner().getName().equals(p1.getName())) {
+			whoseTurn=1;
+			whoStartedPlaying=1;
+		} else if(game.getTrump().getBidOwner().getName().equals(p2.getName())) {
+			whoseTurn=2;
+			whoStartedPlaying=2;
+		} else if(game.getTrump().getBidOwner().getName().equals(p3.getName())) {
+			whoseTurn=3;
+			whoStartedPlaying=3;
+		} else if(game.getTrump().getBidOwner().getName().equals(p4.getName())) {
+			whoseTurn=4;
+			whoStartedPlaying=4;
+		}*/
+		whoseTurn=1;
+		whoStartedPlaying=1;
 	}
 	
 	public void p3pass(float dt) {
@@ -686,7 +958,7 @@ public class CardGame extends CCColorLayer {
 		if(whoseTurn==3 && ((!player3SelectedTrump && !player3pass)||firstRoundBiddingOver)) {
 			game.bid(p3);
 			p3trumpCard=game.getTrump();
-			if(p3trumpCard.getBidOwner().getName().equals(p3.getName())) {
+			if(p3trumpCard.getBidOwner().getName().equals(p3.getName()) && p3trumpCard.getCurrentHightestBid()>trumpBidValue) {
 				trumpBidValue = p3trumpCard.getCurrentHightestBid();
 				currentBidOwner = 3;
 				player3Bid=trumpBidValue;
@@ -732,7 +1004,7 @@ public class CardGame extends CCColorLayer {
 		if(whoseTurn==2 && ((!player2SelectedTrump && !player2pass) || firstRoundBiddingOver)) {
 			game.bid(p2);
 			p2trumpCard=game.getTrump();
-			if(p2trumpCard.getBidOwner().getName().equals(p2.getName())) {
+			if(p2trumpCard.getBidOwner().getName().equals(p2.getName()) && p2trumpCard.getCurrentHightestBid()>trumpBidValue) {
 				trumpBidValue = p2trumpCard.getCurrentHightestBid();
 				currentBidOwner = 2;
 				player2Bid=trumpBidValue;
@@ -799,6 +1071,7 @@ public class CardGame extends CCColorLayer {
 		if(whoseTurn ==1){
 			p1trumpCard.setBid(trumpBidValue);
 			p1trumpCard.setCard(selectedCard);
+			game.bid(p1);
 			player1SelectedTrump = true;
 			player1Bid=trumpBidValue;
 			CCFadeIn fadeIn = CCFadeIn.action(2);
@@ -997,13 +1270,14 @@ public class CardGame extends CCColorLayer {
 	
 				}
 			}
-			if(game.getStatus().getDescription().equals(GameStatus.BID.getDescription())) {
+		if(game.getStatus().getDescription().equals(GameStatus.BID.getDescription())) {
 			if(whoseTurn==1 && ((!player1SelectedTrump && cardSelected)||firstRoundBiddingOver) && !secondRoundBiddingOver) {
 				if(firstRoundBiddingOver) {
 					CGRect passBox = CGRect.make(pass.getPosition().x - pass.getContentSize().width/2, pass.getPosition().y
 							- pass.getContentSize().height/2, pass.getContentSize().width,pass.getContentSize().height);
 					if(CGRect.containsPoint(passBox, location)) {
 						whoseTurn=2;
+						scene.removeChild(pass, true);
 					}
 				}
 				CGRect increaseBox= CGRect.make(increase.getPosition().x - increase.getContentSize().width/2, increase.getPosition().y 
@@ -1220,8 +1494,17 @@ public class CardGame extends CCColorLayer {
 			if(firstRoundBiddingOver && whoseTurn==1) {
 				secondRoundBiddingTouch(location);
 			}
+		} else if(game.getStatus().getDescription().equals(GameStatus.PLAY.getDescription())) {
+			if(whoseTurn==1 && !revealed && currentBidOwner !=1 && firstRoundOver) {//may need to change
+				CGRect revealBox = CGRect.make(revealTrump.getPosition().x-revealTrump.getContentSize().width/2,
+						revealTrump.getPosition().y-revealTrump.getContentSize().height/2, 
+						revealTrump.getContentSize().width,revealTrump.getContentSize().height);
+				if(CGRect.containsPoint(revealBox, location)) {
+					revealTrumpCard();
+					revealed=true;
+				}
+			}
 		}
-
 	  return CCTouchDispatcher.kEventHandled;
 	}
 	
@@ -1512,6 +1795,12 @@ public class CardGame extends CCColorLayer {
 	
 	@Override
 	public boolean ccTouchesMoved(MotionEvent event) {
+		
+		if(whoseTurn==1 && currentBidOwner==1) {
+			trumpCardBox = CGRect.make(showTrumpCard.getPosition().x-showTrumpCard.getContentSize().width/2,
+					showTrumpCard.getPosition().y-showTrumpCard.getContentSize().height/2, 
+					showTrumpCard.getContentSize().width,showTrumpCard.getContentSize().height);
+		}
 		if(p1Cards.size()>7 && p1Cards.get(7) != null) {
 			cardBox8 = CGRect.make(p1Cards.get(7).getPosition().x-p1Cards.get(7).getContentSize().width/2,
 					p1Cards.get(7).getPosition().y-p1Cards.get(7).getContentSize().height/2, 
@@ -1590,28 +1879,42 @@ public class CardGame extends CCColorLayer {
 			} else if(p1Cards.size()>0 && p1Cards.get(0) != null && CGRect.containsPoint(cardBox1, location)) {
 				movingCard=p1Cards.get(0);
 				removeIndex=0;
+			} else if(whoseTurn==1 &&currentBidOwner==1 ) {
+				movingCard = showTrumpCard;
 			} else {
 				movingCard=null;
 			}
 	  }
 	  if(whoseTurn==1 && secondRoundBiddingOver && movingCard!=null) {
-		   movingCard.setPosition(location);
+		   if(currentBidOwner==1 && whoStartedPlaying !=1 && movingCard.equals(showTrumpCard)) {
+			   movingCard.setPosition(location);
+
+		   } else {
+			   movingCard.setPosition(location);
+		   }
 		if(CGRect.containsPoint(tableBox, location)) {
 			game.setPlayerTurn(p1);
 			player1PlayedCard = player1Cards.get(removeIndex);
-			   whoseTurn=2;
-			   if(winSize.width>700) {
-				   movingCard.setScale(1f);
-			   } else {
-				   movingCard.setScale(0.6f);
-			   }
-			   p1Cards.remove(removeIndex);
-			   cardsOnTable.add(player1Cards.remove(removeIndex));
-			   
-			   if(currentBidOwner==1) {
-				   trumpCardIndex=p1Cards.indexOf(selectedTrumpSprite);
-			   }
-			   CardUtilities.rearrangeCards(p1Cards, 1);
+			cardsOnTable.add(player1Cards.get(removeIndex));
+			cardsOnTableSprites.add(movingCard);
+			game.play(p1);
+			if(game.getBoard().getNumPlaysDone()==4) {
+				//call this round is over method
+				this.schedule("oneRoundOver",1f);
+			} else {
+				whoseTurn=2;
+			}
+		   if(winSize.width>700) {
+			   movingCard.setScale(1f);
+		   } else {
+			   movingCard.setScale(0.6f);
+		   }
+		   p1Cards.remove(removeIndex);
+		   
+		   if(currentBidOwner==1) {
+			   trumpCardIndex=p1Cards.indexOf(selectedTrumpSprite);
+		   }
+		   CardUtilities.rearrangeCards(p1Cards, 1);
 		}
 	   
 	  }

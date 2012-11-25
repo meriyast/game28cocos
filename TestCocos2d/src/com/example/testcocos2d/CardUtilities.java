@@ -139,7 +139,7 @@ public class CardUtilities extends CardGame {
 		}
 		for(CCSprite card:pCards) {
 			scene.removeChild(card, true);
-			if((currentBidOwner==1 && index!=trumpCardIndex) || currentBidOwner!=1) {
+			if(currentBidOwner==1 && (index!=trumpCardIndex)) {
 				if(winSize.width > 700) { //if it's a tab
 					card.setScale(2f);
 					card.setPosition(pos,winSize.height/5);
@@ -214,6 +214,19 @@ public class CardUtilities extends CardGame {
 			}
 			scene.addChild(card);
 		}			
+		CCSprite cardInHand = CCSprite.sprite("img/b1fv.png");
+		cardInHand.setRotation(180);
+		if(winSize.width > 700) { //if it's a tab
+			cardInHand.setScale(2f);
+			cardInHand.setPosition(winSize.width/1.07f,pos);
+		} else {
+			cardInHand.setScale(0.6f);
+			cardInHand.setPosition(winSize.width/1.16f,pos);
+		}
+		CCRotateBy rotate = CCRotateBy.action(1, angle-rotateBy);
+		cardInHand.runAction(rotate);
+		scene.addChild(cardInHand);
+		p2Cards.add(cardInHand);
 	}
 	public static void returnTrumpPlayer3(ArrayList<CCSprite> pCards) {
 		float pos;
@@ -254,7 +267,20 @@ public class CardUtilities extends CardGame {
 				rotateBy = rotateBy+15;
 			}
 			scene.addChild(card);
-		}	
+		}
+		CCSprite cardInHand = CCSprite.sprite("img/b1fv.png");
+		cardInHand.setRotation(180);
+		if(winSize.width > 700) { //if it's a tab
+			cardInHand.setScale(2f);
+			cardInHand.setPosition(pos,winSize.height/1.15f);
+		} else {
+			cardInHand.setScale(0.6f);
+			cardInHand.setPosition(pos,winSize.height/1.25f);
+		}
+		CCRotateBy rotate = CCRotateBy.action(1, angle-rotateBy);
+		cardInHand.runAction(rotate);
+		scene.addChild(cardInHand);
+		p2Cards.add(cardInHand);
 		
 	}
 	public static void returnTrumpPlayer2(ArrayList<CCSprite> pCards) {
@@ -281,7 +307,7 @@ public class CardUtilities extends CardGame {
 				card.setPosition(winSize.width/11,pos);
 			} else {
 				card.setScale(0.6f);
-				card.setPosition(winSize.width/7,pos);
+				card.setPosition(winSize.width/11,pos);
 			}
 			
 			CCRotateBy rotate = CCRotateBy.action(1, angle-rotateBy);
@@ -294,7 +320,20 @@ public class CardUtilities extends CardGame {
 				rotateBy = rotateBy+20;
 			}
 			scene.addChild(card);
-		}		
+		}
+		CCSprite cardInHand = CCSprite.sprite("img/b1fv.png");
+		cardInHand.setRotation(90);
+		if(winSize.width > 700) { //if it's a tab
+			cardInHand.setScale(2f);
+			cardInHand.setPosition(winSize.width/11,pos);
+		} else {
+			cardInHand.setScale(0.6f);
+			cardInHand.setPosition(winSize.width/11,pos);
+		}
+		CCRotateBy rotate = CCRotateBy.action(1, angle-rotateBy);
+		cardInHand.runAction(rotate);
+		scene.addChild(cardInHand);
+		p2Cards.add(cardInHand);
 	}
 	public static void returnTrumpPlayer1(ArrayList<CCSprite> pCards) {
 		float pos =winSize.width/2;
@@ -328,7 +367,6 @@ public class CardUtilities extends CardGame {
 			}
 			scene.addChild(card);
 		}
-		
 	}
 	
 	public static void drawTrumpAndBidBoxes() {
@@ -554,7 +592,7 @@ public class CardUtilities extends CardGame {
 		int index=0;
 		for(Card c: p1.getMyHand().getMyCards()) {
 			CCSprite cardInHand = CCSprite.sprite(Card.cardMap.get(c.toString()));
-			if(index != trumpIndex) {
+			//if(index != trumpIndex) {
 				if(winSize.width > 700) { //if it's a tab
 					cardInHand.setScale(1.7f);
 					cardInHand.setPosition(pos,winSize.height/5);
@@ -598,12 +636,14 @@ public class CardUtilities extends CardGame {
 					rotateBy = rotateBy+10;
 				}
 				scene.addChild(cardInHand);
-			}
+			//}
 			p1Cards.add(cardInHand);
 			player1Cards.add(c);
 			index++;
 		}
-		
+		if(firstRoundBiddingOver && currentBidOwner==1) {
+			p1Cards.add(showTrumpCard);
+		}
 		card1OrigPosition = p1Cards.get(0).getPosition();
 		card2OrigPosition = p1Cards.get(1).getPosition();
 		card3OrigPosition = p1Cards.get(2).getPosition();
@@ -612,7 +652,9 @@ public class CardUtilities extends CardGame {
 			card5OrigPosition = p1Cards.get(4).getPosition();
 			card6OrigPosition = p1Cards.get(5).getPosition();
 			card7OrigPosition = p1Cards.get(6).getPosition();
-			card8OrigPosition = p1Cards.get(7).getPosition();
+			if(currentBidOwner !=1) {
+				card8OrigPosition = p1Cards.get(7).getPosition();
+			}
 		}
 	}
 	
@@ -687,7 +729,7 @@ public class CardUtilities extends CardGame {
 	}
 	
 	public static void checkCard8Selected() {
-		if(p1Cards.get(7).getPosition().x != card8OrigPosition.x || p1Cards.get(7).getPosition().y != card8OrigPosition.y) {
+		if(currentBidOwner!=1 &&(p1Cards.get(7).getPosition().x != card8OrigPosition.x || p1Cards.get(7).getPosition().y != card8OrigPosition.y)) {
 			CCMoveTo moveTo = CCMoveTo.action(0.5f, card8OrigPosition);
 			p1Cards.get(7).runAction(moveTo);
 			toggle8=false;
@@ -696,6 +738,13 @@ public class CardUtilities extends CardGame {
 	}
 	
 	public static void justRearrange(ArrayList<CCSprite> pCards,int player) {
+		if(player==1) {
+			for(CCSprite card:pCards) {
+				scene.removeChild(card, true);
+				//card.setPosition(card.getPosition().x-2,card.getPosition().y);
+				scene.addChild(card);
+			}
+		} else 
 		if(player==2) {
 			for(CCSprite csprite:pCards) {
 				csprite.setPosition(csprite.getPosition().x, csprite.getPosition().y-3);
@@ -709,5 +758,30 @@ public class CardUtilities extends CardGame {
 				csprite.setPosition(csprite.getPosition().x, csprite.getPosition().y-3);
 			}			
 		}
+	}
+	
+	public static void afterRevealingTrumpAI(ArrayList<CCSprite> pCards,int player) {
+		if(player==2) {
+			for(CCSprite card:pCards) {
+				scene.removeChild(card, true);
+				card.setPosition(card.getPosition().x, card.getPosition().y-3);
+				scene.addChild(card);
+			}
+
+		} else if(player==3) {
+			for(CCSprite card:pCards) {
+				scene.removeChild(card, true);
+				card.setPosition(card.getPosition().x-1, card.getPosition().y);
+				scene.addChild(card);
+			}
+	
+		} else if(player==4) {
+			for(CCSprite card:pCards) {
+				scene.removeChild(card, true);
+				card.setPosition(card.getPosition().x, card.getPosition().y-3);
+				scene.addChild(card);
+			}
+			
+		}		
 	}
 }

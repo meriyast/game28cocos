@@ -1,8 +1,5 @@
 package cards;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +31,13 @@ public class TestRunner {
 		game.deal();
 		game.setStatus(GameStatus.BID);
 		
-		
+//		if(true)
+//		for(Player p: game.getPlayersInTheGame()){
+//			System.out.println("\nPlayer: "+p.getName());
+//			for(Card card: p.getMyHand().getMyCards())
+//				System.out.print("   "+card.getUniqueCardValue());
+//		}
+//		
 		game.rotateOnce();
 
 		System.out.print("Min Bid:");
@@ -63,7 +66,17 @@ public class TestRunner {
 			}
 			game.updateProceedings();
 		}
-		System.out.println("Game over. ");
+		Team bidTeam =game.getTrump().getBidOwner().getTeam();
+		Player bidPlayer = game.getTrump().getBidOwner();
+		
+		System.out.println("Bid was: "+game.getTrump().getCurrentHightestBid()+" by: "+
+		bidPlayer.getName()+"@"+bidTeam.getTeamName());
+		System.out.println(bidTeam.getTeamName()+" got "+bidTeam.getTotalPoints() +" points.");
+		if(bidTeam.getTotalPoints() >= game.getTrump().getCurrentHightestBid())
+			System.out.println(bidTeam.getTeamName() + " Won!!");
+		else
+			System.out.println(bidTeam.getTeamName() + " Lost :(");
+
 	}
 
 }

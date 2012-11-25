@@ -7,8 +7,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
-import com.example.testcocos2d.CardGame;
-
 
 
 
@@ -24,7 +22,7 @@ public class Game {
 	GameStatus status;
 	private CurrentBoard board;	
 	private int boardSuite;
-
+	private boolean justOpenedTrump;
 	
 	
 	public GameStatus getStatus() {
@@ -49,6 +47,7 @@ public class Game {
 		team2= new Team("Team2", 0);
 		setBoard(new CurrentBoard());
 		board.setGameRef(this);
+		justOpenedTrump = false;
 	}
 	
 	
@@ -64,6 +63,7 @@ public class Game {
 		playersInTheGame.add(player);
 		deck= new Deck() ;
 		board.setGameRef(this);
+		justOpenedTrump =  false;
 	}
 	
 	
@@ -221,7 +221,9 @@ public class Game {
 
 
 	public Card revealTrump() {
-//		this.getTrump().setOpen(true);
+		this.getTrump().setOpen(true);
+		this.justOpenedTrump = true;
+		
 		return trump.getTrumpCard();
 	}
 
@@ -240,8 +242,9 @@ public class Game {
 		//The bidder is alive. Get values from the bidder. 
 		else {
 			
-			trumpCandidate = CardGame.returnTrumpPlayer1();
-//			trumpCandidate = getTrumpFromUI();
+			trumpCandidate =readTrump(p);
+//TODO			
+//			trumpCandidate = CardGame.returnTrumpPlayer1();
 		}
 		
 		//Whether it is ai or not, if the bid is not valid, return.
@@ -305,17 +308,27 @@ public class Game {
 	public Card play(Player p) {
 		//TODO
 		Card played;
-		if(p.getIsAI()){
+//		if(p.getIsAI()){
+			describePlayerHand();
 			played = p.aiPlayGame();
-		}
-		else{
-			played = CardGame.getPlayer1PlayedCard();
-		}
+//		}
+//		else{
+//			played = CardGame.getPlayer1PlayedCard();
+//		}
 		p.getMyHand().removeCard(played);
 		board.updateBoard(p,played);
 		return played;
 	}
 
+	public void describePlayerHand(){
+		for(Player p: getPlayersInTheGame()){
+			System.out.print(p.getName()+"=> ");
+			for(Card c: p.getMyHand().getMyCards()){
+				System.out.print(c.getUniqueCardValue()+", ");
+			}
+			System.out.println("");
+		}
+	}
 
 	public void updateProceedings() {
 		debug = true;
@@ -338,6 +351,16 @@ public class Game {
 		board = new CurrentBoard();
 		board.setGameRef(this);
 		board.setWasCut(false);
+	}
+
+
+	public boolean isJustOpenedTrump() {
+		return justOpenedTrump;
+	}
+
+
+	public void setJustOpenedTrump(boolean justOpenedTrump) {
+		this.justOpenedTrump = justOpenedTrump;
 	}
 	
 }

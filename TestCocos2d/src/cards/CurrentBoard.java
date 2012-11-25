@@ -69,37 +69,68 @@ public class CurrentBoard {
 	
 	
 	public void updateBoard(Player p, Card played) {
+		debug = false;
 		cardsPlayed.add(played);
+		Card trumpCardRef = gameRef.getTrump().getTrumpCard();
 		totalPoints = totalPoints + played.getMyvalue();
 
+		System.out.println("First cut: "+gameRef.isJustOpenedTrump());
+		//First card. will have cardsPlayed.size() = 1.
 		if (cardsPlayed.size() == 1) {
 			getGameRef().setBoardSuite(played.getSuit());
 			setCurrentHolder(p);
 			setHoldingCard(played);
+			if(debug) System.out.println("cardsPlayed.size() == 1");
 			
+		//Normal case. card belong to boardSuite, and is bigger.
 		} else if (played.getSuit() == getGameRef().getBoardSuite()
-				&& played.getRank() < holdingCard.getRank()) {
+				&& played.getRank() < holdingCard.getRank() &&
+				!wasCut) {
 			setCurrentHolder(p);
 			setHoldingCard(played);
+			if(debug) System.out.println("played.getSuit() == getGameRef().getBoardSuite() && played.getRank() < holdingCard.getRank()");
+		
+		//cardSuite != boardSuite. cardSuite = trumpSuite.
+		} else if (trumpCardRef.getSuit() == played.getSuit() &&
+				played.getSuit()!= gameRef.getBoardSuite() &&
+				getGameRef().isJustOpenedTrump() ) {
 			
-
-		} else if (gameRef.getTrump().getTrumpCard().getSuit() == played
-				.getSuit() && wasCut == false) {
+			
+			getGameRef().setJustOpenedTrump(false);
 			setWasCut(true);
-			gameRef.getTrump().setOpen(true);
 			setCurrentHolder(p);
 			setHoldingCard(played);
-			Card playersTrump = gameRef.getTrump().getBidOwner().getTrump();
-			gameRef.getTrump().getBidOwner().getMyHand().addCard(playersTrump);
 
-		} else if (gameRef.getTrump().getTrumpCard().getSuit() == played
-				.getSuit() && wasCut) {
-			if (played.getRank() < getHoldingCard().getRank()) {
-				setCurrentHolder(p);
-				setHoldingCard(played);
+			boolean alreadyIncluded = false;
+			Player trumpOwner = gameRef.getTrump().getBidOwner();
+			for(Card card: trumpOwner.getMyHand().getMyCards()){
+				if(card.equals(trumpCardRef))
+					alreadyIncluded = true;
 			}
 			
+			if(!alreadyIncluded){
+				gameRef.getTrump().getBidOwner().getMyHand().addCard(trumpCardRef);
+			}
+			
+			if(debug) System.out.println("gameRef.getTrump().getTrumpCard().getSuit() == played .getSuit() && wasCut == false");
+
+		} else if (trumpCardRef.getSuit() == played.getSuit() && 
+					wasCut && gameRef.getTrump().isOpen() &&
+					played.getRank() < getHoldingCard().getRank() ) {
+			setCurrentHolder(p);
+			setHoldingCard(played);
+				if(debug) System.out.println("played.getRank() < getHoldingCard().getRank()");
+				
 		}
+		else if (trumpCardRef.getSuit() == played.getSuit() && 
+				!wasCut && gameRef.getTrump().isOpen() ) {
+			setWasCut(true);
+			setCurrentHolder(p);
+			setHoldingCard(played);
+				if(debug) System.out.println("played.getRank() < getHoldingCard().getRank()");
+			
+		}
+		debug = true;
 		if (debug){
 			System.out.println("Now holdingCard:" + getHoldingCard().getUniqueCardValue());
 			System.out

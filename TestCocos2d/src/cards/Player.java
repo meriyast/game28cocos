@@ -222,8 +222,11 @@ public class Player {
 
 						//I don't have a Trump card.
 						if(trumpInHand == null){
+							getGameReference().setJustOpenedTrump(false);
 							trumpSuiteId = game.getTrump().getTrumpCard().getSuit();
 							returnCard = getMinCardFromHand();		
+							
+							
 							if(debug) System.out.println("I don't have TrumpCard. I'll give lowest card: "+returnCard.getUniqueCardValue());
 
 						}

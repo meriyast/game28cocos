@@ -58,6 +58,7 @@ public class TestRunner {
 			game.bid(p);
 		}
 		
+		game.describeBid();
 		for(int i = 0; i<8;i++){
 			System.out.println("\n\n$$$$$$$$ ----Round :"+(i+1)+"---- $$$$$$$$");
 			for(Player p:players){

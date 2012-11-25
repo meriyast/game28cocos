@@ -362,5 +362,11 @@ public class Game {
 	public void setJustOpenedTrump(boolean justOpenedTrump) {
 		this.justOpenedTrump = justOpenedTrump;
 	}
+
+
+	public void describeBid() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
